@@ -1,0 +1,518 @@
+import React, { useState } from 'react';
+import { Bean, RoastLevel, BeanCategory, BlendPart } from '../types';
+import { ROAST_LEVELS, BEAN_CATEGORIES } from '../constants';
+import { Plus, Trash2, Scale, Calendar, Tag, Layers, X, Search, Pencil } from 'lucide-react';
+import { CoffeeBeanIcon } from './CustomIcons';
+
+interface BeanManagerProps {
+  beans: Bean[];
+  onAddBean: (bean: Bean) => void;
+  onUpdateBean: (bean: Bean) => void;
+  onDeleteBean: (id: string) => void;
+}
+
+const BeanManager: React.FC<BeanManagerProps> = ({ beans, onAddBean, onUpdateBean, onDeleteBean }) => {
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isRoastDateUnknown, setIsRoastDateUnknown] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  
+  // Blend Parts State
+  const [blendParts, setBlendParts] = useState<BlendPart[]>([]);
+  const [newPart, setNewPart] = useState<BlendPart>({
+      origin: '',
+      process: '',
+      roastLevel: RoastLevel.MEDIUM,
+      ratio: undefined
+  });
+
+  const [formData, setFormData] = useState<Partial<Bean>>({
+    name: '',
+    roaster: '',
+    roastLevel: RoastLevel.MEDIUM,
+    origin: '',
+    process: '',
+    variety: '',
+    tastingNotes: '',
+    category: BeanCategory.SINGLE_ORIGIN,
+    purchaseDate: '',
+    roastDate: '',
+    price: 0,
+    weight: 250,
+    remainingWeight: 250,
+    isActive: true
+  });
+
+  const handleAddBlendPart = () => {
+    if (!newPart.origin) return;
+    setBlendParts([...blendParts, newPart]);
+    setNewPart({ origin: '', process: '', roastLevel: RoastLevel.MEDIUM, ratio: undefined });
+  };
+
+  const handleRemoveBlendPart = (index: number) => {
+    const updated = [...blendParts];
+    updated.splice(index, 1);
+    setBlendParts(updated);
+  };
+
+  const resetForm = () => {
+      setBlendParts([]);
+      setFormData({
+        id: undefined,
+        name: '',
+        roaster: '',
+        roastLevel: RoastLevel.MEDIUM,
+        origin: '',
+        process: '',
+        variety: '',
+        tastingNotes: '',
+        category: BeanCategory.SINGLE_ORIGIN,
+        purchaseDate: '',
+        roastDate: '',
+        price: 0,
+        weight: 250,
+        remainingWeight: 250,
+        isActive: true,
+        dateAdded: undefined
+      });
+      setIsRoastDateUnknown(false);
+      setIsFormOpen(false);
+  };
+
+  const handleEdit = (bean: Bean) => {
+    setFormData({
+        ...bean,
+        purchaseDate: bean.purchaseDate || '',
+        roastDate: bean.roastDate || '',
+        tastingNotes: bean.tastingNotes || '',
+        variety: bean.variety || '',
+    });
+    setBlendParts(bean.blendParts || []);
+    // If roastDate is empty string, assume it was unknown
+    setIsRoastDateUnknown(bean.roastDate === '');
+    setIsFormOpen(true);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.name || !formData.roaster) return;
+
+    const initialWeight = Number(formData.weight) || 0;
+    const isBlend = formData.category === BeanCategory.BLEND;
+
+    // Determine aggregate values for display if blend
+    const displayOrigin = isBlend ? '拼配产地' : (formData.origin || '未知产地');
+    const displayProcess = isBlend ? '混合处理' : (formData.process || '水洗');
+
+    const beanData: Bean = {
+      id: formData.id || crypto.randomUUID(),
+      name: formData.name!,
+      roaster: formData.roaster!,
+      roastLevel: formData.roastLevel as RoastLevel,
+      origin: displayOrigin,
+      process: displayProcess,
+      variety: formData.variety || '',
+      tastingNotes: formData.tastingNotes || '',
+      category: formData.category as BeanCategory,
+      
+      blendParts: isBlend ? blendParts : [],
+
+      purchaseDate: formData.purchaseDate,
+      roastDate: isRoastDateUnknown ? '' : formData.roastDate, 
+      price: Number(formData.price),
+      weight: initialWeight,
+      remainingWeight: formData.id ? Number(formData.remainingWeight) : initialWeight, // Preserve remaining if editing
+      isActive: formData.isActive ?? true,
+      dateAdded: formData.dateAdded || Date.now(),
+    };
+
+    if (formData.id) {
+        onUpdateBean(beanData);
+    } else {
+        onAddBean(beanData);
+    }
+
+    resetForm();
+  };
+
+  // Filter beans based on search query
+  const filteredBeans = beans.filter(bean => {
+    const query = searchQuery.toLowerCase();
+    return (
+      bean.name.toLowerCase().includes(query) ||
+      bean.roaster.toLowerCase().includes(query) ||
+      bean.origin.toLowerCase().includes(query) ||
+      (bean.variety && bean.variety.toLowerCase().includes(query)) ||
+      (bean.tastingNotes && bean.tastingNotes.toLowerCase().includes(query))
+    );
+  });
+
+  return (
+    <div className="space-y-4 md:space-y-6 pb-20 md:pb-0">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <h2 className="text-xl md:text-2xl font-bold text-slate-800">我的咖啡豆</h2>
+        
+        <div className="flex flex-col-reverse md:flex-row gap-2 w-full md:w-auto">
+          <div className="relative flex-1 md:w-64">
+            <input 
+              type="text" 
+              placeholder="搜索名称、产地、风味..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none text-sm shadow-sm"
+            />
+            <Search className="absolute left-3 top-3 text-slate-400" size={16} />
+          </div>
+          
+          <button
+            onClick={() => { resetForm(); setIsFormOpen(!isFormOpen); }}
+            className="flex items-center justify-center gap-2 bg-amber-700 hover:bg-amber-800 active:bg-amber-900 text-white px-4 py-2.5 rounded-xl transition-all shadow-sm active:scale-95"
+          >
+            <Plus size={18} />
+            <span className="font-medium">添加新豆</span>
+          </button>
+        </div>
+      </div>
+
+      {isFormOpen && (
+        <div className="bg-white p-4 md:p-6 rounded-2xl shadow-xl border border-slate-100 animate-in fade-in slide-in-from-top-4">
+          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="col-span-1 md:col-span-2 flex justify-between items-center mb-2">
+              <h3 className="text-lg font-bold text-slate-700">
+                  {formData.id ? '编辑咖啡豆' : '新咖啡豆'}
+              </h3>
+              <button type="button" onClick={resetForm} className="text-slate-400 p-2"><X size={20}/></button>
+            </div>
+            
+            <input
+              type="text"
+              placeholder="豆子名称 (如: 耶加雪菲 / 意式拼配)"
+              className="p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none"
+              value={formData.name}
+              onChange={e => setFormData({ ...formData, name: e.target.value })}
+              required
+            />
+            <input
+              type="text"
+              placeholder="烘焙商 (如: Blue Bottle)"
+              className="p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none"
+              value={formData.roaster}
+              onChange={e => setFormData({ ...formData, roaster: e.target.value })}
+              required
+            />
+
+            <div className="grid grid-cols-2 gap-3">
+              <select
+                className="p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none bg-white"
+                value={formData.category}
+                onChange={e => setFormData({ ...formData, category: e.target.value as BeanCategory })}
+              >
+                {BEAN_CATEGORIES.map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+              
+              <select
+                className="p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none bg-white"
+                value={formData.roastLevel}
+                onChange={e => setFormData({ ...formData, roastLevel: e.target.value as RoastLevel })}
+              >
+                {ROAST_LEVELS.map(level => (
+                  <option key={level} value={level}>{level} (整体)</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Conditional Rendering based on Category */}
+            {formData.category === BeanCategory.SINGLE_ORIGIN ? (
+                <>
+                    <input
+                    type="text"
+                    placeholder="产地 (如: 埃塞俄比亚)"
+                    className="p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none"
+                    value={formData.origin}
+                    onChange={e => setFormData({ ...formData, origin: e.target.value })}
+                    />
+
+                    <div className="grid grid-cols-2 gap-3">
+                        <input
+                        type="text"
+                        placeholder="处理法"
+                        className="p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none"
+                        value={formData.process}
+                        onChange={e => setFormData({ ...formData, process: e.target.value })}
+                        />
+                         <input
+                        type="text"
+                        placeholder="豆种"
+                        className="p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none"
+                        value={formData.variety}
+                        onChange={e => setFormData({ ...formData, variety: e.target.value })}
+                        />
+                    </div>
+                </>
+            ) : (
+                <div className="col-span-1 md:col-span-2 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <label className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                        <Layers size={16}/> 拼配配方
+                    </label>
+                    
+                    {/* List of added parts */}
+                    {blendParts.length > 0 && (
+                        <ul className="mb-3 space-y-2">
+                            {blendParts.map((part, idx) => (
+                                <li key={idx} className="flex justify-between items-center text-sm bg-white p-2 rounded-lg border border-slate-200 shadow-sm">
+                                    <span>{part.origin} ({part.process}, {part.roastLevel})</span>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-slate-500 bg-slate-100 px-1 rounded">
+                                          {part.ratio !== undefined ? `${part.ratio}%` : '未知比例'}
+                                        </span>
+                                        <button type="button" onClick={() => handleRemoveBlendPart(idx)} className="text-red-400 hover:text-red-600">
+                                            <X size={16}/>
+                                        </button>
+                                    </div>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+
+                    {/* Adder */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        <input 
+                            placeholder="产地" 
+                            className="p-2 border rounded-lg text-sm"
+                            value={newPart.origin} 
+                            onChange={e => setNewPart({...newPart, origin: e.target.value})}
+                        />
+                         <input 
+                            placeholder="处理" 
+                            className="p-2 border rounded-lg text-sm"
+                            value={newPart.process} 
+                            onChange={e => setNewPart({...newPart, process: e.target.value})}
+                        />
+                         <select 
+                            className="p-2 border rounded-lg text-sm bg-white"
+                            value={newPart.roastLevel} 
+                            onChange={e => setNewPart({...newPart, roastLevel: e.target.value as RoastLevel})}
+                        >
+                            {ROAST_LEVELS.map(l => <option key={l} value={l}>{l}</option>)}
+                        </select>
+                         <div className="flex gap-2">
+                            <input 
+                                type="number" 
+                                placeholder="%" 
+                                className="p-2 border rounded-lg text-sm w-full"
+                                value={newPart.ratio === undefined ? '' : newPart.ratio} 
+                                onChange={e => {
+                                  const val = e.target.value;
+                                  setNewPart({...newPart, ratio: val === '' ? undefined : parseFloat(val)})
+                                }}
+                            />
+                            <button 
+                                type="button" 
+                                onClick={handleAddBlendPart}
+                                className="bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg px-2"
+                            >
+                                <Plus size={18} />
+                            </button>
+                         </div>
+                    </div>
+                </div>
+            )}
+
+            <div className="col-span-1 md:col-span-2 grid grid-cols-3 gap-3">
+              <div className="col-span-1">
+                 <label className="block text-xs text-slate-500 mb-1">规格(g)</label>
+                 <input
+                  type="number"
+                  className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none"
+                  value={formData.weight}
+                  onChange={e => setFormData({ ...formData, weight: parseFloat(e.target.value) })}
+                />
+              </div>
+              <div className="col-span-1">
+                 <label className="block text-xs text-slate-500 mb-1">价格(¥)</label>
+                 <input
+                  type="number"
+                  className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none"
+                  value={formData.price}
+                  onChange={e => setFormData({ ...formData, price: parseFloat(e.target.value) })}
+                />
+              </div>
+              <div className="col-span-1">
+                 <label className="block text-xs text-slate-500 mb-1">烘焙日期</label>
+                 <input
+                    type="date"
+                    className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none text-xs"
+                    value={formData.roastDate}
+                    onChange={e => setFormData({ ...formData, roastDate: e.target.value })}
+                    disabled={isRoastDateUnknown}
+                  />
+                  <div className="flex items-center gap-1 mt-1">
+                    <input 
+                      type="checkbox" 
+                      id="roastUnknown"
+                      checked={isRoastDateUnknown}
+                      onChange={(e) => {
+                        setIsRoastDateUnknown(e.target.checked);
+                        if(e.target.checked) setFormData({ ...formData, roastDate: '' });
+                      }}
+                      className="w-3 h-3 text-amber-600 rounded focus:ring-amber-500 border-gray-300"
+                    />
+                    <label htmlFor="roastUnknown" className="text-[10px] text-slate-500">日期未知</label>
+                  </div>
+              </div>
+            </div>
+
+            <div className="col-span-1 md:col-span-2">
+              <input
+                type="text"
+                placeholder="风味描述 (如: 茉莉花, 柑橘)"
+                className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none"
+                value={formData.tastingNotes}
+                onChange={e => setFormData({ ...formData, tastingNotes: e.target.value })}
+              />
+            </div>
+
+            <div className="col-span-1 md:col-span-2 flex justify-end gap-3 mt-4">
+              <button
+                type="button"
+                onClick={resetForm}
+                className="px-6 py-3 rounded-xl text-slate-500 hover:bg-slate-50 font-medium"
+              >
+                取消
+              </button>
+              <button
+                type="submit"
+                className="px-6 py-3 bg-amber-600 text-white rounded-xl hover:bg-amber-700 font-bold shadow-md shadow-amber-200"
+              >
+                {formData.id ? '保存' : '添加'}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+        {filteredBeans.length > 0 ? (
+          filteredBeans.map(bean => {
+           // Calculate inventory percentage
+           const percentage = bean.weight > 0 ? (bean.remainingWeight / bean.weight) * 100 : 0;
+           const isLow = percentage < 20;
+           const isBlend = bean.category === BeanCategory.BLEND;
+           
+           return (
+            <div key={bean.id} className="bg-white rounded-xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow overflow-hidden group flex flex-col h-full active:scale-[0.99] transition-transform duration-100">
+              <div className="h-1.5 bg-amber-600"></div>
+              <div className="p-4 md:p-5 flex-1 flex flex-col">
+                <div className="flex justify-between items-start mb-2 gap-2">
+                  <div className="min-w-0">
+                    <h3 className="font-bold text-lg text-slate-800 leading-tight truncate">{bean.name}</h3>
+                    <p className="text-amber-700 text-sm font-medium mt-1 truncate">{bean.roaster}</p>
+                  </div>
+                  <span className={`flex-shrink-0 text-[10px] px-2 py-1 rounded-full border ${isBlend ? 'bg-amber-50 border-amber-200 text-amber-800' : 'bg-slate-50 border-slate-200 text-slate-600'}`}>
+                    {bean.category}
+                  </span>
+                </div>
+                
+                {/* Inventory Bar */}
+                <div className="mt-3 mb-4">
+                    <div className="flex justify-between text-xs mb-1">
+                        <span className="text-slate-500 flex items-center gap-1"><Scale size={12}/> 库存</span>
+                        <span className={`font-medium ${isLow ? 'text-red-500' : 'text-slate-700'}`}>
+                            {bean.remainingWeight.toFixed(0)}g / {bean.weight}g
+                        </span>
+                    </div>
+                    <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                        <div 
+                            className={`h-full rounded-full transition-all duration-500 ${isLow ? 'bg-red-400' : 'bg-emerald-500'}`} 
+                            style={{width: `${Math.min(100, Math.max(0, percentage))}%`}}
+                        ></div>
+                    </div>
+                </div>
+
+                <div className="space-y-1.5 text-sm text-slate-600 mt-auto">
+                   <div className="flex justify-between border-b border-slate-50 pb-1">
+                    <span className="text-slate-400 text-xs">烘焙度</span>
+                    <span className="font-medium text-xs">{bean.roastLevel}</span>
+                  </div>
+
+                  {isBlend && bean.blendParts && bean.blendParts.length > 0 ? (
+                      <div className="pt-1">
+                          <span className="text-xs text-slate-400 block mb-1">配方:</span>
+                          <ul className="text-xs space-y-1">
+                              {bean.blendParts.slice(0, 2).map((part, idx) => (
+                                  <li key={idx} className="flex justify-between">
+                                      <span className="text-slate-700 truncate max-w-[60%]">{part.origin}</span>
+                                      <span className="text-slate-500">{part.ratio !== undefined ? `${part.ratio}%` : ''}</span>
+                                  </li>
+                              ))}
+                              {bean.blendParts.length > 2 && <li className="text-[10px] text-slate-400">...</li>}
+                          </ul>
+                      </div>
+                  ) : (
+                    <>
+                        <div className="flex justify-between border-b border-slate-50 pb-1">
+                            <span className="text-slate-400 text-xs">产地</span>
+                            <span className="font-medium truncate max-w-[120px] text-xs" title={bean.origin}>{bean.origin}</span>
+                        </div>
+                         {bean.variety && (
+                            <div className="flex justify-between pb-1">
+                                <span className="text-slate-400 text-xs">豆种</span>
+                                <span className="font-medium text-xs">{bean.variety}</span>
+                            </div>
+                        )}
+                    </>
+                  )}
+                  
+                   <div className="flex justify-between pt-2 border-t border-slate-50 pb-1 text-xs text-slate-400">
+                        <span className="flex items-center gap-1"><Calendar size={12}/> 烘焙日期</span>
+                        <span>{bean.roastDate || '未知'}</span>
+                   </div>
+                </div>
+
+                {bean.tastingNotes && (
+                  <div className="mt-3 pt-2 border-t border-slate-100">
+                    <p className="text-sm text-slate-700 italic truncate">{bean.tastingNotes}</p>
+                  </div>
+                )}
+                
+                <div className="mt-4 flex justify-end gap-3 pt-2">
+                  <button
+                    onClick={() => handleEdit(bean)}
+                    className="flex items-center gap-1 text-slate-400 hover:text-amber-600 transition-colors py-1 px-2 hover:bg-slate-50 rounded-lg text-xs"
+                  >
+                    <Pencil size={14} /> 编辑
+                  </button>
+                  <button
+                    onClick={() => onDeleteBean(bean.id)}
+                    className="flex items-center gap-1 text-slate-400 hover:text-red-500 transition-colors py-1 px-2 hover:bg-slate-50 rounded-lg text-xs"
+                  >
+                    <Trash2 size={14} /> 删除
+                  </button>
+                </div>
+              </div>
+            </div>
+           );
+        })
+        ) : (
+          <div className="col-span-full flex flex-col items-center justify-center p-12 text-slate-400 border-2 border-dashed border-slate-200 rounded-xl">
+             {searchQuery ? (
+                 <>
+                    <Search size={48} className="mb-4 opacity-50" />
+                    <p className="text-lg">未找到匹配的咖啡豆</p>
+                 </>
+             ) : (
+                 <>
+                    <CoffeeBeanIcon size={48} className="mb-4 opacity-50" />
+                    <p className="text-lg">您的豆仓是空的</p>
+                    <button onClick={() => { resetForm(); setIsFormOpen(true); }} className="mt-2 text-amber-600 font-medium hover:underline">添加第一包咖啡豆</button>
+                 </>
+             )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default BeanManager;

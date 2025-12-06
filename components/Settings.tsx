@@ -1,0 +1,151 @@
+import React, { useRef, useState } from 'react';
+import { Download, Upload, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Bean, BrewLog, Equipment } from '../types';
+import { saveBeans, saveEquipment, saveLogs } from '../services/storageService';
+
+interface SettingsProps {
+  beans: Bean[];
+  logs: BrewLog[];
+  equipment: Equipment[];
+  onImportSuccess: (beans: Bean[], logs: BrewLog[], equipment: Equipment[]) => void;
+}
+
+const Settings: React.FC<SettingsProps> = ({ beans, logs, equipment, onImportSuccess }) => {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [importStatus, setImportStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [statusMessage, setStatusMessage] = useState('');
+
+  const handleExport = () => {
+    const data = {
+      version: '1.0',
+      timestamp: Date.now(),
+      beans,
+      logs,
+      equipment
+    };
+
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `brewlog_backup_${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const json = JSON.parse(event.target?.result as string);
+        
+        // Basic validation
+        if (!json.beans || !json.logs || !Array.isArray(json.beans) || !Array.isArray(json.logs)) {
+          throw new Error('无效的备份文件格式');
+        }
+
+        // Save to local storage
+        saveBeans(json.beans);
+        saveLogs(json.logs);
+        // Handle equipment backward compatibility
+        const importedEquipment = json.equipment && Array.isArray(json.equipment) ? json.equipment : [];
+        saveEquipment(importedEquipment);
+
+        // Update App state
+        onImportSuccess(json.beans, json.logs, importedEquipment);
+        
+        setImportStatus('success');
+        setStatusMessage(`成功导入: ${json.beans.length} 款豆子, ${json.logs.length} 条记录`);
+      } catch (err) {
+        console.error(err);
+        setImportStatus('error');
+        setStatusMessage('导入失败: 文件格式错误或损坏');
+      }
+    };
+    reader.readAsText(file);
+    // Reset input
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  return (
+    <div className="space-y-6">
+       <h2 className="text-2xl font-bold text-slate-800">数据归档与管理</h2>
+       
+       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+         {/* Export Section */}
+         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+            <div className="flex items-center gap-3 mb-4 text-amber-700">
+                <div className="p-2 bg-amber-50 rounded-lg">
+                    <Download size={24} />
+                </div>
+                <h3 className="text-lg font-semibold">导出数据 (备份)</h3>
+            </div>
+            <p className="text-slate-600 text-sm mb-6">
+                将您的所有咖啡豆、冲煮记录和设备数据导出为 JSON 文件。建议定期备份以防数据丢失。
+            </p>
+            <button 
+                onClick={handleExport}
+                className="w-full py-3 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+            >
+                <Download size={18} />
+                下载备份文件
+            </button>
+         </div>
+
+         {/* Import Section */}
+         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+            <div className="flex items-center gap-3 mb-4 text-slate-700">
+                <div className="p-2 bg-slate-100 rounded-lg">
+                    <Upload size={24} />
+                </div>
+                <h3 className="text-lg font-semibold">导入数据 (恢复)</h3>
+            </div>
+            <p className="text-slate-600 text-sm mb-6">
+                从之前的备份文件中恢复数据。注意：这将覆盖当前的现有数据，请谨慎操作。
+            </p>
+            
+            <input 
+                type="file" 
+                ref={fileInputRef}
+                onChange={handleImport}
+                accept=".json"
+                className="hidden"
+            />
+            
+            <button 
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full py-3 bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+            >
+                <Upload size={18} />
+                选择备份文件
+            </button>
+
+            {importStatus === 'success' && (
+                <div className="mt-4 p-3 bg-green-50 text-green-700 text-sm rounded-lg flex items-center gap-2">
+                    <CheckCircle2 size={16} />
+                    {statusMessage}
+                </div>
+            )}
+            {importStatus === 'error' && (
+                 <div className="mt-4 p-3 bg-red-50 text-red-700 text-sm rounded-lg flex items-center gap-2">
+                    <AlertCircle size={16} />
+                    {statusMessage}
+                </div>
+            )}
+         </div>
+       </div>
+
+       <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 text-xs text-slate-500">
+           <p className="font-semibold mb-1">隐私说明</p>
+           <p>BrewLog 所有数据均存储在您的本地浏览器中，不会上传到任何云端服务器。请妥善保管您的导出文件。</p>
+       </div>
+    </div>
+  );
+};
+
+export default Settings;
