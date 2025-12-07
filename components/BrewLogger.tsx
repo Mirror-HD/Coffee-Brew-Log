@@ -146,7 +146,7 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
           className="w-full md:w-auto flex items-center justify-center gap-2 bg-amber-700 hover:bg-amber-800 text-white px-4 py-2.5 rounded-xl transition-all shadow-sm active:scale-95"
         >
           <Plus size={18} />
-          <span className="font-medium">记一笔</span>
+          <span className="font-medium">喝咖啡</span>
         </button>
       </div>
 

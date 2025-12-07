@@ -18,44 +18,42 @@ const Settings: React.FC<SettingsProps> = ({ beans, logs, equipment, onImportSuc
 
   const handleExport = () => {
     setIsExporting(true);
-    // Use setTimeout to allow the UI to show the loading spinner before the synchronous(ish) download blocks
-    setTimeout(() => {
-        try {
-            const data = {
-              version: '1.0',
-              timestamp: Date.now(),
-              beans,
-              logs,
-              equipment
-            };
     
-            const fileName = `coffee_backup_${new Date().toISOString().split('T')[0]}.json`;
-            const jsonString = JSON.stringify(data, null, 2);
-            const blob = new Blob([jsonString], { type: 'application/json' });
-            
-            // Create a link element, hide it, click it, and remove it
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = fileName;
-            link.style.display = 'none';
-            document.body.appendChild(link);
-            
-            link.click();
-            
-            // Cleanup
-            setTimeout(() => {
-                document.body.removeChild(link);
-                URL.revokeObjectURL(url);
-                setIsExporting(false);
-            }, 100);
-    
-        } catch (e: any) {
-            console.error("Export failed:", e);
-            alert(`导出出错: ${e.message || e}`);
+    try {
+        const data = {
+          version: '1.0',
+          timestamp: Date.now(),
+          beans,
+          logs,
+          equipment
+        };
+
+        const fileName = `coffee_backup_${new Date().toISOString().split('T')[0]}.json`;
+        const jsonString = JSON.stringify(data, null, 2);
+        const blob = new Blob([jsonString], { type: 'application/json' });
+        
+        // Create a link element, hide it, click it, and remove it
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        
+        link.click();
+        
+        // Cleanup in the next tick
+        setTimeout(() => {
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
             setIsExporting(false);
-        }
-    }, 500);
+        }, 0);
+
+    } catch (e: any) {
+        console.error("Export failed:", e);
+        alert(`导出出错: ${e.message || e}`);
+        setIsExporting(false);
+    }
   };
 
   const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Bean, RoastLevel, BeanCategory, BlendPart } from '../types';
 import { ROAST_LEVELS, BEAN_CATEGORIES } from '../constants';
-import { Plus, Trash2, Scale, Calendar, Layers, X, Search, Pencil } from 'lucide-react';
+import { Plus, Trash2, Scale, Calendar, Layers, X, Search, Pencil, CheckCircle2 } from 'lucide-react';
 import { CoffeeBeanIcon } from './CustomIcons';
 import CustomSelect from './CustomSelect';
 
@@ -22,11 +22,13 @@ const BeanManager: React.FC<BeanManagerProps> = ({ beans, onAddBean, onUpdateBea
   // Use string for ratio input to avoid parsing bugs while typing
   const [newPart, setNewPart] = useState<{
       origin: string;
+      variety: string;
       process: string;
       roastLevel: RoastLevel;
       ratio: string;
   }>({
       origin: '',
+      variety: '',
       process: '',
       roastLevel: RoastLevel.MEDIUM,
       ratio: ''
@@ -58,7 +60,7 @@ const BeanManager: React.FC<BeanManagerProps> = ({ beans, onAddBean, onUpdateBea
         ...newPart,
         ratio: newPart.ratio ? parseFloat(newPart.ratio) : undefined
     }]);
-    setNewPart({ origin: '', process: '', roastLevel: RoastLevel.MEDIUM, ratio: '' });
+    setNewPart({ origin: '', variety: '', process: '', roastLevel: RoastLevel.MEDIUM, ratio: '' });
   };
 
   const handleRemoveBlendPart = (index: number) => {
@@ -128,6 +130,7 @@ const BeanManager: React.FC<BeanManagerProps> = ({ beans, onAddBean, onUpdateBea
       id: formData.id || crypto.randomUUID(),
       name: formData.name!,
       roaster: formData.roaster!,
+      // If blend, we might save the state's roastLevel but it's ignored in UI
       roastLevel: formData.roastLevel as RoastLevel,
       origin: displayOrigin,
       process: displayProcess,
@@ -155,6 +158,27 @@ const BeanManager: React.FC<BeanManagerProps> = ({ beans, onAddBean, onUpdateBea
     resetForm();
   };
 
+  // Helper to calculate resting days
+  const calculateRestingDays = (dateStr?: string): number | null => {
+    if (!dateStr) return null;
+    const start = new Date(dateStr);
+    const now = new Date();
+    // Reset times to compare dates only to avoid timezone/time-of-day issues
+    start.setHours(0,0,0,0);
+    now.setHours(0,0,0,0);
+    
+    const diffTime = now.getTime() - start.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays >= 0 ? diffDays : null;
+  };
+
+  // Helper to determine resting status color
+  const getRestingStatusColor = (days: number) => {
+      if (days < 7) return 'bg-blue-50 text-blue-600 border-blue-100'; // Fresh
+      if (days <= 60) return 'bg-emerald-50 text-emerald-600 border-emerald-100'; // Prime
+      return 'bg-orange-50 text-orange-600 border-orange-100'; // Old
+  };
+
   // Filter beans based on search query
   const filteredBeans = beans.filter(bean => {
     const query = searchQuery.toLowerCase();
@@ -166,6 +190,8 @@ const BeanManager: React.FC<BeanManagerProps> = ({ beans, onAddBean, onUpdateBea
       (bean.tastingNotes && bean.tastingNotes.toLowerCase().includes(query))
     );
   });
+
+  const totalRatio = blendParts.reduce((sum, p) => sum + (p.ratio || 0), 0);
 
   return (
     <div className="space-y-4 md:space-y-6 pb-20 md:pb-0">
@@ -204,63 +230,89 @@ const BeanManager: React.FC<BeanManagerProps> = ({ beans, onAddBean, onUpdateBea
               <button type="button" onClick={resetForm} className="text-slate-400 p-2"><X size={20}/></button>
             </div>
             
-            <input
-              type="text"
-              placeholder="豆子名称 (如: 耶加雪菲 / 意式拼配)"
-              className="p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none"
-              value={formData.name}
-              onChange={e => setFormData({ ...formData, name: e.target.value })}
-              required
-            />
-            <input
-              type="text"
-              placeholder="烘焙商 (如: Blue Bottle)"
-              className="p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none"
-              value={formData.roaster}
-              onChange={e => setFormData({ ...formData, roaster: e.target.value })}
-              required
-            />
+            <div className="col-span-1 md:col-span-2">
+                <label className="block text-xs font-medium text-slate-500 mb-1">名称</label>
+                <input
+                type="text"
+                placeholder="例如: 耶加雪菲 / 意式拼配"
+                className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none"
+                value={formData.name}
+                onChange={e => setFormData({ ...formData, name: e.target.value })}
+                required
+                />
+            </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <CustomSelect
-                value={formData.category}
-                onChange={(val) => setFormData({ ...formData, category: val as BeanCategory })}
-                options={BEAN_CATEGORIES.map(cat => ({ value: cat, label: cat }))}
-              />
+            <div className="col-span-1 md:col-span-2">
+                <label className="block text-xs font-medium text-slate-500 mb-1">烘焙商</label>
+                <input
+                type="text"
+                placeholder="例如: Blue Bottle"
+                className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none"
+                value={formData.roaster}
+                onChange={e => setFormData({ ...formData, roaster: e.target.value })}
+                required
+                />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 col-span-1 md:col-span-2">
+              <div>
+                  <label className="block text-xs font-medium text-slate-500 mb-1">类型</label>
+                  <CustomSelect
+                    value={formData.category}
+                    onChange={(val) => setFormData({ ...formData, category: val as BeanCategory })}
+                    options={BEAN_CATEGORIES.map(cat => ({ value: cat, label: cat }))}
+                  />
+              </div>
               
-              <CustomSelect
-                value={formData.roastLevel}
-                onChange={(val) => setFormData({ ...formData, roastLevel: val as RoastLevel })}
-                options={ROAST_LEVELS.map(level => ({ value: level, label: `${level} (整体)` }))}
-              />
+              <div>
+                  <label className="block text-xs font-medium text-slate-500 mb-1">
+                      烘焙度
+                  </label>
+                  <CustomSelect
+                    value={formData.category === BeanCategory.BLEND ? '' : formData.roastLevel}
+                    onChange={(val) => setFormData({ ...formData, roastLevel: val as RoastLevel })}
+                    options={ROAST_LEVELS.map(level => ({ value: level, label: `${level}` }))}
+                    disabled={formData.category === BeanCategory.BLEND}
+                    placeholder={formData.category === BeanCategory.BLEND ? ' ' : '请选择'}
+                  />
+              </div>
             </div>
 
             {/* Conditional Rendering based on Category */}
             {formData.category === BeanCategory.SINGLE_ORIGIN ? (
                 <>
-                    <input
-                    type="text"
-                    placeholder="产地 (如: 埃塞俄比亚)"
-                    className="p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none"
-                    value={formData.origin}
-                    onChange={e => setFormData({ ...formData, origin: e.target.value })}
-                    />
-
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="col-span-1 md:col-span-2">
+                        <label className="block text-xs font-medium text-slate-500 mb-1">产地</label>
                         <input
-                        type="text"
-                        placeholder="处理法"
-                        className="p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none"
-                        value={formData.process}
-                        onChange={e => setFormData({ ...formData, process: e.target.value })}
+                            type="text"
+                            placeholder="例如: 埃塞俄比亚"
+                            className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none"
+                            value={formData.origin}
+                            onChange={e => setFormData({ ...formData, origin: e.target.value })}
                         />
-                         <input
-                        type="text"
-                        placeholder="豆种"
-                        className="p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none"
-                        value={formData.variety}
-                        onChange={e => setFormData({ ...formData, variety: e.target.value })}
-                        />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 col-span-1 md:col-span-2">
+                        <div>
+                            <label className="block text-xs font-medium text-slate-500 mb-1">处理法</label>
+                            <input
+                            type="text"
+                            placeholder="例如: 水洗"
+                            className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none"
+                            value={formData.process}
+                            onChange={e => setFormData({ ...formData, process: e.target.value })}
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-medium text-slate-500 mb-1">豆种</label>
+                            <input
+                            type="text"
+                            placeholder="例如: 瑰夏"
+                            className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none"
+                            value={formData.variety}
+                            onChange={e => setFormData({ ...formData, variety: e.target.value })}
+                            />
+                        </div>
                     </div>
                 </>
             ) : (
@@ -274,7 +326,13 @@ const BeanManager: React.FC<BeanManagerProps> = ({ beans, onAddBean, onUpdateBea
                         <ul className="mb-3 space-y-2">
                             {blendParts.map((part, idx) => (
                                 <li key={idx} className="flex justify-between items-center text-sm bg-white p-2 rounded-lg border border-slate-200 shadow-sm">
-                                    <span>{part.origin} ({part.process}, {part.roastLevel})</span>
+                                    <div className="flex flex-col">
+                                        <span className="font-medium text-slate-700">
+                                            {part.origin}
+                                            {part.variety && <span className="font-normal text-slate-500"> · {part.variety}</span>}
+                                        </span>
+                                        <span className="text-[10px] text-slate-400">{part.process}, {part.roastLevel}</span>
+                                    </div>
                                     <div className="flex items-center gap-2">
                                         <span className="text-slate-500 bg-slate-100 px-1 rounded">
                                           {part.ratio !== undefined ? `${part.ratio}%` : '未知比例'}
@@ -289,50 +347,78 @@ const BeanManager: React.FC<BeanManagerProps> = ({ beans, onAddBean, onUpdateBea
                     )}
 
                     {/* Adder */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                        <input 
-                            placeholder="产地" 
-                            className="p-2 border rounded-lg text-sm"
-                            value={newPart.origin} 
-                            onChange={e => setNewPart({...newPart, origin: e.target.value})}
-                        />
-                         <input 
-                            placeholder="处理" 
-                            className="p-2 border rounded-lg text-sm"
-                            value={newPart.process} 
-                            onChange={e => setNewPart({...newPart, process: e.target.value})}
-                        />
-                         <CustomSelect
-                            className="text-sm"
-                            value={newPart.roastLevel} 
-                            onChange={(val) => setNewPart({...newPart, roastLevel: val as RoastLevel})}
-                            options={ROAST_LEVELS.map(l => ({ value: l, label: l }))}
-                         />
-                         <div className="flex gap-2">
-                            <input 
-                                type="number" 
-                                step="0.1"
-                                placeholder="%" 
-                                className="p-2 border rounded-lg text-sm w-full"
-                                value={newPart.ratio} 
-                                onChange={e => setNewPart({...newPart, ratio: e.target.value})}
-                                onWheel={(e) => e.currentTarget.blur()}
-                            />
-                            <button 
-                                type="button" 
-                                onClick={handleAddBlendPart}
-                                className="bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg px-2"
-                            >
-                                <Plus size={18} />
-                            </button>
-                         </div>
-                    </div>
+                    {totalRatio < 100 ? (
+                        <div className="grid grid-cols-2 md:grid-cols-5 gap-2 items-end">
+                            <div>
+                                <label className="block text-[10px] text-slate-500 mb-1 ml-1">产地</label>
+                                <input 
+                                    placeholder="产地" 
+                                    className="w-full p-2 border rounded-lg text-sm"
+                                    value={newPart.origin} 
+                                    onChange={e => setNewPart({...newPart, origin: e.target.value})}
+                                />
+                            </div>
+                             <div>
+                                <label className="block text-[10px] text-slate-500 mb-1 ml-1">豆种</label>
+                                <input 
+                                    placeholder="豆种" 
+                                    className="w-full p-2 border rounded-lg text-sm"
+                                    value={newPart.variety} 
+                                    onChange={e => setNewPart({...newPart, variety: e.target.value})}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-[10px] text-slate-500 mb-1 ml-1">处理法</label>
+                                <input 
+                                    placeholder="处理" 
+                                    className="w-full p-2 border rounded-lg text-sm"
+                                    value={newPart.process} 
+                                    onChange={e => setNewPart({...newPart, process: e.target.value})}
+                                />
+                            </div>
+                            <div>
+                                 <label className="block text-[10px] text-slate-500 mb-1 ml-1">烘焙度</label>
+                                 <CustomSelect
+                                    className="text-sm"
+                                    value={newPart.roastLevel} 
+                                    onChange={(val) => setNewPart({...newPart, roastLevel: val as RoastLevel})}
+                                    options={ROAST_LEVELS.map(l => ({ value: l, label: l }))}
+                                 />
+                            </div>
+                             
+                             <div className="flex gap-2 col-span-2 md:col-span-1">
+                                <div className="w-full">
+                                    <label className="block text-[10px] text-slate-500 mb-1 ml-1">比例%</label>
+                                    <input 
+                                        type="number" 
+                                        step="0.1"
+                                        placeholder="%" 
+                                        className="p-2 border rounded-lg text-sm w-full"
+                                        value={newPart.ratio} 
+                                        onChange={e => setNewPart({...newPart, ratio: e.target.value})}
+                                        onWheel={(e) => e.currentTarget.blur()}
+                                    />
+                                </div>
+                                <button 
+                                    type="button" 
+                                    onClick={handleAddBlendPart}
+                                    className="bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg px-2 h-[38px]"
+                                >
+                                    <Plus size={18} />
+                                </button>
+                             </div>
+                        </div>
+                    ) : (
+                         <div className="flex items-center justify-center gap-2 p-2 bg-emerald-50 text-emerald-700 text-sm rounded-lg border border-emerald-100">
+                            <CheckCircle2 size={16}/> 配方比例已完整 (100%)
+                        </div>
+                    )}
                 </div>
             )}
 
             <div className="col-span-1 md:col-span-2 grid grid-cols-2 md:grid-cols-4 gap-3">
               <div className="col-span-1">
-                 <label className="block text-xs text-slate-500 mb-1">规格(g)</label>
+                 <label className="block text-xs font-medium text-slate-500 mb-1">规格(g)</label>
                  <input
                   type="number"
                   step="0.1"
@@ -351,7 +437,7 @@ const BeanManager: React.FC<BeanManagerProps> = ({ beans, onAddBean, onUpdateBea
                 />
               </div>
               <div className="col-span-1">
-                 <label className="block text-xs text-slate-500 mb-1">剩余(g)</label>
+                 <label className="block text-xs font-medium text-slate-500 mb-1">剩余(g)</label>
                  <input
                   type="number"
                   step="0.1"
@@ -362,7 +448,7 @@ const BeanManager: React.FC<BeanManagerProps> = ({ beans, onAddBean, onUpdateBea
                 />
               </div>
               <div className="col-span-1">
-                 <label className="block text-xs text-slate-500 mb-1">价格(¥)</label>
+                 <label className="block text-xs font-medium text-slate-500 mb-1">价格(¥)</label>
                  <input
                   type="number"
                   step="0.1"
@@ -373,7 +459,7 @@ const BeanManager: React.FC<BeanManagerProps> = ({ beans, onAddBean, onUpdateBea
                 />
               </div>
               <div className="col-span-1">
-                 <label className="block text-xs text-slate-500 mb-1">烘焙日期</label>
+                 <label className="block text-xs font-medium text-slate-500 mb-1">烘焙日期</label>
                  <input
                     type="date"
                     className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none text-xs"
@@ -398,9 +484,10 @@ const BeanManager: React.FC<BeanManagerProps> = ({ beans, onAddBean, onUpdateBea
             </div>
 
             <div className="col-span-1 md:col-span-2">
+              <label className="block text-xs font-medium text-slate-500 mb-1">风味描述</label>
               <input
                 type="text"
-                placeholder="风味描述 (如: 茉莉花, 柑橘)"
+                placeholder="例如: 茉莉花, 柑橘"
                 className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none"
                 value={formData.tastingNotes}
                 onChange={e => setFormData({ ...formData, tastingNotes: e.target.value })}
@@ -459,6 +546,7 @@ const BeanManager: React.FC<BeanManagerProps> = ({ beans, onAddBean, onUpdateBea
            const isLow = percentage < 20;
            const isBlend = bean.category === BeanCategory.BLEND;
            const isFinished = !bean.isActive || bean.remainingWeight <= 0;
+           const restingDays = calculateRestingDays(bean.roastDate);
            
            return (
             <div key={bean.id} className={`bg-white rounded-xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow overflow-hidden group flex flex-col h-full active:scale-[0.99] transition-transform duration-100 ${isFinished ? 'opacity-70 grayscale-[0.5]' : ''}`}>
@@ -491,27 +579,14 @@ const BeanManager: React.FC<BeanManagerProps> = ({ beans, onAddBean, onUpdateBea
                 </div>
 
                 <div className="space-y-1.5 text-sm text-slate-600 mt-auto">
-                   <div className="flex justify-between border-b border-slate-50 pb-1">
-                    <span className="text-slate-400 text-xs">烘焙度</span>
-                    <span className="font-medium text-xs">{bean.roastLevel}</span>
-                  </div>
-
-                  {isBlend && bean.blendParts && bean.blendParts.length > 0 ? (
-                      <div className="pt-1">
-                          <span className="text-xs text-slate-400 block mb-1">配方:</span>
-                          <ul className="text-xs space-y-1">
-                              {bean.blendParts.slice(0, 2).map((part, idx) => (
-                                  <li key={idx} className="flex justify-between">
-                                      <span className="text-slate-700 truncate max-w-[60%]">{part.origin}</span>
-                                      <span className="text-slate-500">{part.ratio !== undefined ? `${part.ratio}%` : ''}</span>
-                                  </li>
-                              ))}
-                              {bean.blendParts.length > 2 && <li className="text-[10px] text-slate-400">...</li>}
-                          </ul>
+                   
+                  {!isBlend ? (
+                     <>
+                      <div className="flex justify-between border-b border-slate-50 pb-1">
+                        <span className="text-slate-400 text-xs">烘焙度</span>
+                        <span className="font-medium text-xs">{bean.roastLevel}</span>
                       </div>
-                  ) : (
-                    <>
-                        <div className="flex justify-between border-b border-slate-50 pb-1">
+                      <div className="flex justify-between border-b border-slate-50 pb-1">
                             <span className="text-slate-400 text-xs">产地</span>
                             <span className="font-medium truncate max-w-[120px] text-xs" title={bean.origin}>{bean.origin}</span>
                         </div>
@@ -521,12 +596,41 @@ const BeanManager: React.FC<BeanManagerProps> = ({ beans, onAddBean, onUpdateBea
                                 <span className="font-medium text-xs">{bean.variety}</span>
                             </div>
                         )}
-                    </>
+                     </>
+                  ) : (
+                      bean.blendParts && bean.blendParts.length > 0 && (
+                          <div className="pt-1">
+                              <span className="text-xs text-slate-400 block mb-1">拼配详情:</span>
+                              <ul className="text-xs space-y-1 bg-slate-50/50 rounded-lg p-2 border border-slate-100">
+                                  {bean.blendParts.map((part, idx) => (
+                                      <li key={idx} className="flex justify-between items-start border-b border-slate-100 last:border-0 pb-1 last:pb-0 mb-1 last:mb-0">
+                                          <div className="flex flex-col min-w-0 pr-2">
+                                            <span className="text-slate-700 font-medium truncate">
+                                                {part.origin}
+                                                {part.variety && <span className="font-normal text-slate-500"> · {part.variety}</span>}
+                                            </span>
+                                            <span className="text-[10px] text-slate-500 truncate">{part.process} · {part.roastLevel}</span>
+                                          </div>
+                                          <span className="text-slate-600 font-mono text-[10px] bg-white px-1.5 py-0.5 rounded border border-slate-100 whitespace-nowrap">
+                                            {part.ratio !== undefined ? `${part.ratio}%` : '?%'}
+                                          </span>
+                                      </li>
+                                  ))}
+                              </ul>
+                          </div>
+                      )
                   )}
                   
                    <div className="flex justify-between pt-2 border-t border-slate-50 pb-1 text-xs text-slate-400">
                         <span className="flex items-center gap-1"><Calendar size={12}/> 烘焙日期</span>
-                        <span>{bean.roastDate ? bean.roastDate.replace(/-/g, '/') : '未知'}</span>
+                        <div className="flex items-center gap-1.5">
+                            {restingDays !== null && (
+                                <span className={`px-1.5 py-0.5 rounded border text-[10px] font-medium ${getRestingStatusColor(restingDays)}`}>
+                                    已养 {restingDays} 天
+                                </span>
+                            )}
+                            <span>{bean.roastDate ? bean.roastDate.replace(/-/g, '/') : '未知'}</span>
+                        </div>
                    </div>
                 </div>
 

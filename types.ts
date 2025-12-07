@@ -39,9 +39,10 @@ export interface Equipment {
 
 export interface BlendPart {
   origin: string;
+  variety?: string; // New: Bean Variety per part
   process: string;
   roastLevel: RoastLevel;
-  ratio?: number; // percentage or grams, optional
+  ratio?: number; // percentage
 }
 
 export interface Bean {
