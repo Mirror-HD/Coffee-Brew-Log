@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Equipment, EquipmentType } from '../types';
 import { EQUIPMENT_TYPES } from '../constants';
-import { Plus, Trash2, Settings, X, ChevronDown } from 'lucide-react';
+import { Plus, Trash2, Settings, X } from 'lucide-react';
 import { HandGrinderIcon, V60Icon, ScaleIcon } from './CustomIcons';
+import CustomSelect from './CustomSelect';
 
 interface EquipmentManagerProps {
   equipment: Equipment[];
@@ -79,18 +80,11 @@ const EquipmentManager: React.FC<EquipmentManagerProps> = ({ equipment, onAddEqu
             
             <div>
               <label className="block text-xs font-medium text-slate-500 mb-1">设备类型</label>
-              <div className="relative">
-                <select
-                    className="w-full appearance-none bg-slate-50 hover:bg-slate-100 border border-slate-200 focus:bg-white focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 text-slate-700 rounded-xl px-4 py-3 pr-10 outline-none transition-all duration-200 cursor-pointer"
-                    value={formData.type}
-                    onChange={e => setFormData({ ...formData, type: e.target.value as EquipmentType })}
-                >
-                    {EQUIPMENT_TYPES.map(t => (
-                    <option key={t} value={t}>{t}</option>
-                    ))}
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
-              </div>
+              <CustomSelect
+                value={formData.type}
+                onChange={(val) => setFormData({ ...formData, type: val as EquipmentType })}
+                options={EQUIPMENT_TYPES.map(t => ({ value: t, label: t }))}
+              />
             </div>
 
             <div>

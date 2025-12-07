@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Bean, RoastLevel, BeanCategory, BlendPart } from '../types';
 import { ROAST_LEVELS, BEAN_CATEGORIES } from '../constants';
-import { Plus, Trash2, Scale, Calendar, Tag, Layers, X, Search, Pencil, ChevronDown, CheckCircle } from 'lucide-react';
+import { Plus, Trash2, Scale, Calendar, Layers, X, Search, Pencil } from 'lucide-react';
 import { CoffeeBeanIcon } from './CustomIcons';
+import CustomSelect from './CustomSelect';
 
 interface BeanManagerProps {
   beans: Bean[];
@@ -201,31 +202,17 @@ const BeanManager: React.FC<BeanManagerProps> = ({ beans, onAddBean, onUpdateBea
             />
 
             <div className="grid grid-cols-2 gap-3">
-              <div className="relative">
-                <select
-                  className="w-full appearance-none bg-slate-50 hover:bg-slate-100 border border-slate-200 focus:bg-white focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 text-slate-700 rounded-xl px-4 py-3 pr-10 outline-none transition-all duration-200 cursor-pointer"
-                  value={formData.category}
-                  onChange={e => setFormData({ ...formData, category: e.target.value as BeanCategory })}
-                >
-                  {BEAN_CATEGORIES.map(cat => (
-                    <option key={cat} value={cat}>{cat}</option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
-              </div>
+              <CustomSelect
+                value={formData.category}
+                onChange={(val) => setFormData({ ...formData, category: val as BeanCategory })}
+                options={BEAN_CATEGORIES.map(cat => ({ value: cat, label: cat }))}
+              />
               
-              <div className="relative">
-                <select
-                  className="w-full appearance-none bg-slate-50 hover:bg-slate-100 border border-slate-200 focus:bg-white focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 text-slate-700 rounded-xl px-4 py-3 pr-10 outline-none transition-all duration-200 cursor-pointer"
-                  value={formData.roastLevel}
-                  onChange={e => setFormData({ ...formData, roastLevel: e.target.value as RoastLevel })}
-                >
-                  {ROAST_LEVELS.map(level => (
-                    <option key={level} value={level}>{level} (整体)</option>
-                  ))}
-                </select>
-                 <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
-              </div>
+              <CustomSelect
+                value={formData.roastLevel}
+                onChange={(val) => setFormData({ ...formData, roastLevel: val as RoastLevel })}
+                options={ROAST_LEVELS.map(level => ({ value: level, label: `${level} (整体)` }))}
+              />
             </div>
 
             {/* Conditional Rendering based on Category */}
@@ -295,16 +282,12 @@ const BeanManager: React.FC<BeanManagerProps> = ({ beans, onAddBean, onUpdateBea
                             value={newPart.process} 
                             onChange={e => setNewPart({...newPart, process: e.target.value})}
                         />
-                         <div className="relative">
-                            <select 
-                                className="w-full appearance-none bg-white border border-slate-200 text-slate-700 rounded-lg py-2 pl-3 pr-8 text-sm focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all cursor-pointer"
-                                value={newPart.roastLevel} 
-                                onChange={e => setNewPart({...newPart, roastLevel: e.target.value as RoastLevel})}
-                            >
-                                {ROAST_LEVELS.map(l => <option key={l} value={l}>{l}</option>)}
-                            </select>
-                            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={14} />
-                         </div>
+                         <CustomSelect
+                            className="text-sm"
+                            value={newPart.roastLevel} 
+                            onChange={(val) => setNewPart({...newPart, roastLevel: val as RoastLevel})}
+                            options={ROAST_LEVELS.map(l => ({ value: l, label: l }))}
+                         />
                          <div className="flex gap-2">
                             <input 
                                 type="number" 

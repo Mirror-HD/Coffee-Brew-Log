@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Bean, BrewLog, BrewMethod, Equipment, EquipmentType } from '../types';
 import { BREW_METHODS } from '../constants';
 import { Droplet, Clock, Thermometer, Plus, ChevronDown, ChevronUp, Settings2, X } from 'lucide-react';
+import CustomSelect from './CustomSelect';
 
 interface BrewLoggerProps {
   logs: BrewLog[];
@@ -117,36 +118,24 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
 
             <div className="lg:col-span-2">
               <label className="block text-xs font-medium text-slate-500 mb-1">咖啡豆 (库存)</label>
-              <div className="relative">
-                <select
-                    className="w-full appearance-none bg-slate-50 hover:bg-slate-100 border border-slate-200 focus:bg-white focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 text-slate-700 rounded-xl px-4 py-3 pr-10 outline-none transition-all duration-200 cursor-pointer"
-                    value={formData.beanId || ''}
-                    onChange={e => setFormData({ ...formData, beanId: e.target.value })}
-                    required
-                >
-                    <option value="">选择咖啡豆</option>
-                    {beans.map(bean => (
-                    <option key={bean.id} value={bean.id}>
-                        {bean.name} - {bean.remainingWeight.toFixed(0)}g 剩余
-                    </option>
-                    ))}
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
-              </div>
+              <CustomSelect
+                value={formData.beanId}
+                onChange={(val) => setFormData({ ...formData, beanId: val })}
+                placeholder="选择咖啡豆"
+                options={beans.map(bean => ({
+                    value: bean.id,
+                    label: `${bean.name} - ${bean.remainingWeight.toFixed(0)}g 剩余`
+                }))}
+              />
             </div>
 
             <div className="lg:col-span-2">
               <label className="block text-xs font-medium text-slate-500 mb-1">冲煮方式</label>
-              <div className="relative">
-                <select
-                    className="w-full appearance-none bg-slate-50 hover:bg-slate-100 border border-slate-200 focus:bg-white focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 text-slate-700 rounded-xl px-4 py-3 pr-10 outline-none transition-all duration-200 cursor-pointer"
-                    value={formData.method}
-                    onChange={e => setFormData({ ...formData, method: e.target.value as BrewMethod })}
-                >
-                    {BREW_METHODS.map(m => <option key={m} value={m}>{m}</option>)}
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
-              </div>
+              <CustomSelect
+                value={formData.method}
+                onChange={(val) => setFormData({ ...formData, method: val as BrewMethod })}
+                options={BREW_METHODS.map(m => ({ value: m, label: m }))}
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-3 col-span-1 md:col-span-2">
@@ -197,19 +186,18 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
             
             <div className="lg:col-span-2">
                 <label className="block text-xs font-medium text-slate-500 mb-1">磨豆机</label>
-                 <div className="relative">
-                    <select
-                        className="w-full appearance-none bg-slate-50 hover:bg-slate-100 border border-slate-200 focus:bg-white focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 text-slate-700 rounded-xl px-4 py-3 pr-10 outline-none transition-all duration-200 cursor-pointer"
-                        value={formData.grinderId || ''}
-                        onChange={e => setFormData({ ...formData, grinderId: e.target.value })}
-                    >
-                        <option value="">选择磨豆机</option>
-                        {grinders.map(g => (
-                            <option key={g.id} value={g.id}>{g.name} {g.brand ? `(${g.brand})` : ''}</option>
-                        ))}
-                    </select>
-                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
-                 </div>
+                <CustomSelect
+                    value={formData.grinderId}
+                    onChange={(val) => setFormData({ ...formData, grinderId: val })}
+                    placeholder="选择磨豆机"
+                    options={[
+                        { value: '', label: '未指定 / 无' },
+                        ...grinders.map(g => ({
+                            value: g.id,
+                            label: `${g.name} ${g.brand ? `(${g.brand})` : ''}`
+                        }))
+                    ]}
+                />
             </div>
 
              <div className="lg:col-span-2">
@@ -225,19 +213,18 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
             
             <div className="lg:col-span-2">
               <label className="block text-xs font-medium text-slate-500 mb-1">滤杯/设备</label>
-              <div className="relative">
-                <select
-                    className="w-full appearance-none bg-slate-50 hover:bg-slate-100 border border-slate-200 focus:bg-white focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 text-slate-700 rounded-xl px-4 py-3 pr-10 outline-none transition-all duration-200 cursor-pointer"
-                    value={formData.brewerId || ''}
-                    onChange={e => setFormData({ ...formData, brewerId: e.target.value })}
-                >
-                    <option value="">未指定 (默认)</option>
-                    {brewers.map(b => (
-                        <option key={b.id} value={b.id}>{b.name} {b.brand ? `(${b.brand})` : ''}</option>
-                    ))}
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
-              </div>
+              <CustomSelect
+                    value={formData.brewerId}
+                    onChange={(val) => setFormData({ ...formData, brewerId: val })}
+                    placeholder="未指定 (默认)"
+                    options={[
+                        { value: '', label: '未指定 (默认)' },
+                        ...brewers.map(b => ({
+                            value: b.id,
+                            label: `${b.name} ${b.brand ? `(${b.brand})` : ''}`
+                        }))
+                    ]}
+                />
             </div>
 
              <div className="col-span-1 md:col-span-2 lg:col-span-2">

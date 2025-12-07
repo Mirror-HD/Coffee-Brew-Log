@@ -15,7 +15,7 @@ const Settings: React.FC<SettingsProps> = ({ beans, logs, equipment, onImportSuc
   const [importStatus, setImportStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [statusMessage, setStatusMessage] = useState('');
 
-  const handleExport = () => {
+  const handleExport = async () => {
     const data = {
       version: '1.0',
       timestamp: Date.now(),
@@ -24,11 +24,33 @@ const Settings: React.FC<SettingsProps> = ({ beans, logs, equipment, onImportSuc
       equipment
     };
 
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const fileName = `brewlog_backup_${new Date().toISOString().split('T')[0]}.json`;
+    const jsonString = JSON.stringify(data, null, 2);
+    const blob = new Blob([jsonString], { type: 'application/json' });
+
+    // Try Web Share API (Level 2 with files) for mobile devices
+    // This enables "Save to Files" on iOS and better file handling on Android
+    // allowing users to pick the root directory or any other folder.
+    try {
+        const file = new File([blob], fileName, { type: 'application/json' });
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({
+                files: [file],
+                title: 'Coffee App Backup',
+                text: 'Coffee App Data Backup',
+            });
+            return;
+        }
+    } catch (error) {
+        console.warn('Web Share API failed or dismissed, falling back to legacy download:', error);
+        // Continue to legacy download method if share fails
+    }
+
+    // Standard download fallback
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `brewlog_backup_${new Date().toISOString().split('T')[0]}.json`;
+    a.download = fileName;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -93,7 +115,7 @@ const Settings: React.FC<SettingsProps> = ({ beans, logs, equipment, onImportSuc
                 className="w-full py-3 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-medium transition-colors flex items-center justify-center gap-2 shadow-sm active:scale-[0.98]"
             >
                 <Download size={18} />
-                下载备份文件
+                下载 / 保存备份
             </button>
          </div>
 
@@ -141,8 +163,10 @@ const Settings: React.FC<SettingsProps> = ({ beans, logs, equipment, onImportSuc
        </div>
 
        <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs text-slate-500">
-           <p className="font-semibold mb-1">隐私说明</p>
-           <p>Coffee 所有数据均存储在您的本地浏览器中，不会上传到任何云端服务器。请妥善保管您的导出文件。</p>
+           <p className="font-semibold mb-1">隐私与存储说明</p>
+           <p className="mb-2">Coffee 所有数据均存储在您的本地浏览器中，不会上传到云端。</p>
+           <p className="font-semibold mb-1">手机端下载说明</p>
+           <p>点击“下载 / 保存备份”后，如弹出分享菜单，请选择 <strong>“存储到文件”</strong> (iOS) 或 <strong>“保存到手机/文件管理器”</strong> (Android) 以便选择保存位置（如手机根目录）。</p>
        </div>
     </div>
   );
