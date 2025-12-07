@@ -13,7 +13,10 @@
     "recharts": "^3.5.1",
     "@google/genai": "^1.31.0",
     "lucide-react": "^0.556.0",
-    "react-dom": "^19.2.1"
+    "react-dom": "^19.2.1",
+    "@capacitor/core": "^7.4.4",
+    "@capacitor/filesystem": "^7.1.5",
+    "@capacitor/share": "^7.0.2"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

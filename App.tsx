@@ -15,12 +15,24 @@ const App: React.FC = () => {
   const [equipment, setEquipment] = useState<Equipment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load Data
+  // Load Data & Request Storage Persistence
   useEffect(() => {
+    // 1. Load Data
     setBeans(getBeans());
     setLogs(getLogs());
     setEquipment(getEquipment());
     setIsLoading(false);
+
+    // 2. Request Persistent Storage (Best effort for Web Apps)
+    if (navigator.storage && navigator.storage.persist) {
+      navigator.storage.persist().then(granted => {
+        if (granted) {
+          console.log("Storage will not be cleared except by explicit user action");
+        } else {
+          console.log("Storage may be cleared by the UA under storage pressure.");
+        }
+      });
+    }
   }, []);
 
   // Persist Data Changes

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Tab } from '../types';
-import { LayoutDashboard, Coffee, Settings } from 'lucide-react';
+import { LayoutDashboard, Coffee, Archive } from 'lucide-react';
 import { CoffeeBeanIcon, HandGrinderIcon } from './CustomIcons';
 
 interface LayoutProps {
@@ -15,7 +15,7 @@ const Layout: React.FC<LayoutProps> = ({ activeTab, setActiveTab, children }) =>
     { id: 'brews', label: '记录', icon: Coffee }, // Shortened label for mobile
     { id: 'beans', label: '豆仓', icon: CoffeeBeanIcon }, // Shortened label
     { id: 'equipment', label: '设备', icon: HandGrinderIcon },
-    { id: 'settings', label: '设置', icon: Settings }, // Shortened label
+    { id: 'settings', label: '归档', icon: Archive }, // Shortened label
   ] as const;
 
   return (
@@ -55,7 +55,7 @@ const Layout: React.FC<LayoutProps> = ({ activeTab, setActiveTab, children }) =>
                 `}
               >
                 <Icon size={20} className={isActive ? "stroke-[2.5]" : "stroke-2"} />
-                <span>{item.label === '记录' ? '冲煮记录' : item.label === '豆仓' ? '咖啡豆' : item.label === '设置' ? '数据归档' : item.label}</span>
+                <span>{item.label === '记录' ? '冲煮记录' : item.label === '豆仓' ? '咖啡豆' : item.label === '归档' ? '数据归档' : item.label}</span>
               </button>
             );
           })}

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Bean, BrewLog, BrewMethod, Equipment, EquipmentType } from '../types';
 import { BREW_METHODS } from '../constants';
-import { Droplet, Clock, Thermometer, Plus, ChevronDown, ChevronUp, Settings2, X, Pencil, Trash2 } from 'lucide-react';
+import { Droplet, Clock, Thermometer, Plus, ChevronDown, ChevronUp, Settings2, X, Pencil, Trash2, AlertTriangle } from 'lucide-react';
 import CustomSelect from './CustomSelect';
 
 interface BrewLoggerProps {
@@ -17,6 +17,7 @@ interface BrewLoggerProps {
 const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLog, onUpdateLog, onDeleteLog, onUpdateBean }) => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [expandedLogId, setExpandedLogId] = useState<string | null>(null);
+  const [logToDelete, setLogToDelete] = useState<string | null>(null);
 
   // Form State - Using 'any' to allow strings for numeric fields during editing (fixes decimal input bugs)
   const [formData, setFormData] = useState<any>({
@@ -66,10 +67,11 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
     setIsFormOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    if (window.confirm('确定要删除这条冲煮记录吗？')) {
-      onDeleteLog(id);
-      if (expandedLogId === id) setExpandedLogId(null);
+  const confirmDelete = () => {
+    if (logToDelete) {
+      onDeleteLog(logToDelete);
+      if (expandedLogId === logToDelete) setExpandedLogId(null);
+      setLogToDelete(null);
     }
   };
 
@@ -139,6 +141,39 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
 
   return (
     <div className="space-y-4 md:space-y-6 pb-20 md:pb-0">
+      
+      {/* Custom Delete Modal */}
+      {logToDelete && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setLogToDelete(null)}>
+              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xs p-5 border border-slate-100 scale-100 animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+                  <div className="flex flex-col items-center text-center mb-5">
+                      <div className="w-12 h-12 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-3">
+                        <AlertTriangle size={24} />
+                      </div>
+                      <h3 className="text-lg font-bold text-slate-800">确认删除</h3>
+                      <p className="text-sm text-slate-600 mt-1">
+                          您确定要删除这条冲煮记录吗？
+                          <br/><span className="text-xs text-slate-400 mt-1 block">此操作无法撤销。</span>
+                      </p>
+                  </div>
+                  <div className="flex gap-3">
+                      <button 
+                          onClick={() => setLogToDelete(null)}
+                          className="flex-1 py-3 bg-slate-100 text-slate-700 font-medium rounded-xl hover:bg-slate-200 transition-colors"
+                      >
+                          取消
+                      </button>
+                      <button 
+                          onClick={confirmDelete}
+                          className="flex-1 py-3 bg-red-500 text-white font-medium rounded-xl hover:bg-red-600 transition-colors shadow-sm shadow-red-200"
+                      >
+                          删除
+                      </button>
+                  </div>
+              </div>
+          </div>
+      )}
+
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <h2 className="text-xl md:text-2xl font-bold text-slate-800">冲煮记录</h2>
         <button
@@ -408,7 +443,7 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
                         <Pencil size={14} /> 编辑
                     </button>
                     <button
-                        onClick={() => handleDelete(log.id)}
+                        onClick={() => setLogToDelete(log.id)}
                         className="flex items-center gap-1 text-slate-400 hover:text-red-500 transition-colors py-1 px-2 hover:bg-slate-100 rounded-lg text-xs"
                     >
                         <Trash2 size={14} /> 删除

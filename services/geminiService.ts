@@ -5,6 +5,28 @@ const apiKey = process.env.API_KEY || '';
 
 const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
+export const checkConnection = async (): Promise<boolean> => {
+  if (!ai) return false;
+  try {
+    // Create a timeout promise that rejects after 10 seconds
+    const timeoutPromise = new Promise<never>((_, reject) => 
+      setTimeout(() => reject(new Error('Connection timeout')), 10000)
+    );
+
+    // Race the API call against the timeout
+    const apiPromise = ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: 'ping',
+    });
+
+    await Promise.race([apiPromise, timeoutPromise]);
+    return true;
+  } catch (error) {
+    console.error("Connection check failed:", error);
+    return false;
+  }
+};
+
 export const analyzeBrew = async (log: BrewLog, bean: Bean, grinder?: Equipment, brewer?: Equipment): Promise<string> => {
   if (!ai) return "缺少 API 密钥。请检查环境配置。";
 
