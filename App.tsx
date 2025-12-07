@@ -73,7 +73,7 @@ const App: React.FC = () => {
   };
 
   if (isLoading) {
-    return <div className="h-screen w-full flex items-center justify-center bg-slate-50 text-amber-700">BrewLog AI 启动中...</div>;
+    return <div className="h-screen w-full flex items-center justify-center bg-slate-50 text-amber-700">Coffee 启动中...</div>;
   }
 
   return (

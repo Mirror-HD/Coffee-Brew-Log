@@ -142,7 +142,7 @@ const Settings: React.FC<SettingsProps> = ({ beans, logs, equipment, onImportSuc
 
        <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 text-xs text-slate-500">
            <p className="font-semibold mb-1">隐私说明</p>
-           <p>BrewLog 所有数据均存储在您的本地浏览器中，不会上传到任何云端服务器。请妥善保管您的导出文件。</p>
+           <p>Coffee 所有数据均存储在您的本地浏览器中，不会上传到任何云端服务器。请妥善保管您的导出文件。</p>
        </div>
     </div>
   );

@@ -25,7 +25,7 @@ const Layout: React.FC<LayoutProps> = ({ activeTab, setActiveTab, children }) =>
       <header className="md:hidden fixed top-0 left-0 right-0 h-14 bg-white/80 backdrop-blur-md border-b border-slate-200 z-50 flex items-center px-4">
         <div className="flex items-center gap-2 text-amber-700 font-bold text-lg">
            <Coffee className="stroke-2 w-5 h-5" />
-           <span>BrewLog</span>
+           <span>Coffee</span>
         </div>
       </header>
 
@@ -34,7 +34,7 @@ const Layout: React.FC<LayoutProps> = ({ activeTab, setActiveTab, children }) =>
         <div className="p-6">
           <div className="flex items-center gap-2 text-amber-700 font-bold text-xl tracking-tight">
             <Coffee className="stroke-2" />
-            <span>BrewLog</span>
+            <span>Coffee</span>
           </div>
         </div>
 
