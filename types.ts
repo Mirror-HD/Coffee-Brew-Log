@@ -3,6 +3,11 @@ export enum BeanCategory {
   BLEND = '拼配'
 }
 
+export enum BeanOwner {
+  PERSONAL = '个人',
+  CLUB = '社团'
+}
+
 export enum RoastLevel {
   LIGHT = '浅烘焙',
   MEDIUM_LIGHT = '中浅烘焙',
@@ -56,6 +61,8 @@ export interface Bean {
   tastingNotes?: string;
   category: BeanCategory;
   
+  owner?: BeanOwner; // New: Owner field (Personal or Club)
+
   // New: Detailed parts for Blends
   blendParts?: BlendPart[]; 
 

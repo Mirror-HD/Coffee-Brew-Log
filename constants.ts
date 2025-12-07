@@ -1,9 +1,10 @@
-import { RoastLevel, BrewMethod, BeanCategory, EquipmentType } from './types';
+import { RoastLevel, BrewMethod, BeanCategory, EquipmentType, BeanOwner } from './types';
 
 export const ROAST_LEVELS = Object.values(RoastLevel);
 export const BREW_METHODS = Object.values(BrewMethod);
 export const BEAN_CATEGORIES = Object.values(BeanCategory);
 export const EQUIPMENT_TYPES = Object.values(EquipmentType);
+export const BEAN_OWNERS = Object.values(BeanOwner);
 
 export const MOCK_BEANS = [
   {
@@ -16,6 +17,7 @@ export const MOCK_BEANS = [
     variety: 'Heirloom',
     tastingNotes: '茉莉花, 柠檬, 桃子',
     category: BeanCategory.SINGLE_ORIGIN,
+    owner: BeanOwner.PERSONAL,
     purchaseDate: '2023-10-01',
     roastDate: '2023-09-25',
     price: 128,

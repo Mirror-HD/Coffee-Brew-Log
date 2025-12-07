@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Bean, RoastLevel, BeanCategory, BlendPart } from '../types';
-import { ROAST_LEVELS, BEAN_CATEGORIES } from '../constants';
-import { Plus, Trash2, Scale, Calendar, Layers, X, Search, Pencil, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { Bean, RoastLevel, BeanCategory, BlendPart, BeanOwner } from '../types';
+import { ROAST_LEVELS, BEAN_CATEGORIES, BEAN_OWNERS } from '../constants';
+import { Plus, Trash2, Scale, Calendar, Layers, X, Search, Pencil, CheckCircle2, AlertTriangle, User, Users, Coins } from 'lucide-react';
 import { CoffeeBeanIcon } from './CustomIcons';
 import CustomSelect from './CustomSelect';
 
@@ -48,6 +48,7 @@ const BeanManager: React.FC<BeanManagerProps> = ({ beans, onAddBean, onUpdateBea
     variety: '',
     tastingNotes: '',
     category: BeanCategory.SINGLE_ORIGIN,
+    owner: BeanOwner.PERSONAL,
     purchaseDate: '',
     roastDate: '',
     price: '',           
@@ -87,6 +88,7 @@ const BeanManager: React.FC<BeanManagerProps> = ({ beans, onAddBean, onUpdateBea
         variety: '',
         tastingNotes: '',
         category: BeanCategory.SINGLE_ORIGIN,
+        owner: BeanOwner.PERSONAL,
         purchaseDate: '',
         roastDate: '',
         price: '',
@@ -105,6 +107,7 @@ const BeanManager: React.FC<BeanManagerProps> = ({ beans, onAddBean, onUpdateBea
   const startEditing = (bean: Bean) => {
     setFormData({
         ...bean,
+        owner: bean.owner || BeanOwner.PERSONAL,
         purchaseDate: bean.purchaseDate || '',
         roastDate: bean.roastDate || '',
         tastingNotes: bean.tastingNotes || '',
@@ -149,6 +152,7 @@ const BeanManager: React.FC<BeanManagerProps> = ({ beans, onAddBean, onUpdateBea
       variety: formData.variety || '',
       tastingNotes: formData.tastingNotes || '',
       category: formData.category as BeanCategory,
+      owner: formData.owner as BeanOwner,
       blendParts: isBlend ? blendParts : [],
       purchaseDate: formData.purchaseDate,
       roastDate: isRoastDateUnknown ? '' : formData.roastDate, 
@@ -254,6 +258,30 @@ const BeanManager: React.FC<BeanManagerProps> = ({ beans, onAddBean, onUpdateBea
                 placeholder={formData.category === BeanCategory.BLEND ? ' ' : '请选择'}
               />
           </div>
+        </div>
+
+        <div className="col-span-1 md:col-span-2">
+            <label className="block text-xs font-medium text-slate-500 mb-2">所有者</label>
+            <div className="flex gap-4">
+                {BEAN_OWNERS.map(ownerType => (
+                    <label key={ownerType} className="flex items-center gap-2 cursor-pointer group">
+                        <div className="relative flex items-center">
+                            <input
+                                type="radio"
+                                name="owner"
+                                value={ownerType}
+                                checked={formData.owner === ownerType}
+                                onChange={() => setFormData({...formData, owner: ownerType})}
+                                className="peer appearance-none w-5 h-5 rounded-full border border-slate-300 checked:border-amber-600 transition-colors"
+                            />
+                            <div className="absolute inset-0 m-auto w-2.5 h-2.5 rounded-full bg-amber-600 scale-0 peer-checked:scale-100 transition-transform"></div>
+                        </div>
+                        <span className={`text-sm group-hover:text-amber-700 transition-colors ${formData.owner === ownerType ? 'text-amber-700 font-medium' : 'text-slate-600'}`}>
+                            {ownerType === BeanOwner.PERSONAL ? '个人' : '社团'}
+                        </span>
+                    </label>
+                ))}
+            </div>
         </div>
 
         {formData.category === BeanCategory.SINGLE_ORIGIN ? (
@@ -587,36 +615,56 @@ const BeanManager: React.FC<BeanManagerProps> = ({ beans, onAddBean, onUpdateBea
              const isBlend = bean.category === BeanCategory.BLEND;
              const isFinished = !bean.isActive || bean.remainingWeight <= 0;
              const restingDays = calculateRestingDays(bean.roastDate);
+             
+             // Owner Logic
+             const isClub = bean.owner === BeanOwner.CLUB;
+             const unitPrice = (bean.price && bean.weight) ? (bean.price / bean.weight).toFixed(2) : null;
            
              return (
               <div key={bean.id} className={`bg-white rounded-xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow overflow-hidden group flex flex-col h-full active:scale-[0.99] transition-transform duration-100 ${isFinished ? 'opacity-70 grayscale-[0.5]' : ''}`}>
-                <div className={`h-1.5 ${isFinished ? 'bg-slate-300' : 'bg-amber-600'}`}></div>
+                <div className={`h-1.5 ${isFinished ? 'bg-slate-300' : isClub ? 'bg-indigo-500' : 'bg-amber-600'}`}></div>
                 <div className="p-4 md:p-5 flex-1 flex flex-col">
                   <div className="flex justify-between items-start mb-2 gap-2">
                     <div className="min-w-0">
                       <h3 className="font-bold text-lg text-slate-800 leading-tight truncate">{bean.name}</h3>
                       <p className="text-amber-700 text-sm font-medium mt-1 truncate">{bean.roaster}</p>
                     </div>
-                    <span className={`flex-shrink-0 text-[10px] px-2 py-1 rounded-full border ${isBlend ? 'bg-amber-50 border-amber-200 text-amber-800' : 'bg-slate-50 border-slate-200 text-slate-600'}`}>
-                      {bean.category}
-                    </span>
+                    <div className="flex flex-col gap-1 items-end shrink-0">
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full border ${isBlend ? 'bg-amber-50 border-amber-200 text-amber-800' : 'bg-slate-50 border-slate-200 text-slate-600'}`}>
+                        {bean.category}
+                        </span>
+                        {isClub && (
+                            <span className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full border bg-indigo-50 border-indigo-200 text-indigo-700 font-medium">
+                                <Users size={10} /> 社团
+                            </span>
+                        )}
+                    </div>
                   </div>
                   
-                  {/* Inventory Bar */}
-                  <div className="mt-3 mb-4">
-                      <div className="flex justify-between text-xs mb-1">
-                          <span className="text-slate-500 flex items-center gap-1"><Scale size={12}/> 库存</span>
-                          <span className={`font-medium ${isLow ? 'text-red-500' : 'text-slate-700'}`}>
-                              {Number(bean.remainingWeight).toFixed(1).replace(/\.0$/, '')}g / {Number(bean.weight).toFixed(1).replace(/\.0$/, '')}g
-                          </span>
+                  {/* Inventory Bar - Hidden for Club Beans */}
+                  {!isClub && (
+                    <div className="mt-3 mb-4">
+                        <div className="flex justify-between text-xs mb-1">
+                            <span className="text-slate-500 flex items-center gap-1"><Scale size={12}/> 库存</span>
+                            <span className={`font-medium ${isLow ? 'text-red-500' : 'text-slate-700'}`}>
+                                {Number(bean.remainingWeight).toFixed(1).replace(/\.0$/, '')}g / {Number(bean.weight).toFixed(1).replace(/\.0$/, '')}g
+                            </span>
+                        </div>
+                        <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                            <div 
+                                className={`h-full rounded-full transition-all duration-500 ${isFinished ? 'bg-slate-300' : isLow ? 'bg-red-400' : 'bg-emerald-500'}`} 
+                                style={{width: `${Math.min(100, Math.max(0, percentage))}%`}}
+                            ></div>
+                        </div>
+                    </div>
+                  )}
+
+                  {isClub && (
+                      <div className="mt-2 mb-4 p-2 bg-indigo-50/50 rounded-lg border border-indigo-100 text-xs text-indigo-600 flex items-center gap-2">
+                          <Users size={14} className="shrink-0"/>
+                          <span>社团公用豆，实时库存已隐藏</span>
                       </div>
-                      <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
-                          <div 
-                              className={`h-full rounded-full transition-all duration-500 ${isFinished ? 'bg-slate-300' : isLow ? 'bg-red-400' : 'bg-emerald-500'}`} 
-                              style={{width: `${Math.min(100, Math.max(0, percentage))}%`}}
-                          ></div>
-                      </div>
-                  </div>
+                  )}
 
                   <div className="space-y-1.5 text-sm text-slate-600 mt-auto">
                      
@@ -660,8 +708,22 @@ const BeanManager: React.FC<BeanManagerProps> = ({ beans, onAddBean, onUpdateBea
                             </div>
                         )
                     )}
+
+                    {/* Price Info Row */}
+                    {(bean.price || unitPrice) && (
+                        <div className="flex justify-between items-center border-t border-slate-50 pt-1 pb-1">
+                            <div className="flex items-center gap-1 text-slate-400 text-xs">
+                                <Coins size={12} />
+                                <span>价格</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                {bean.price && <span className="text-slate-600 font-medium text-xs">¥{bean.price}</span>}
+                                {unitPrice && <span className="bg-amber-50 text-amber-700 px-1.5 py-0.5 rounded text-[10px] font-bold">¥{unitPrice}/g</span>}
+                            </div>
+                        </div>
+                    )}
                     
-                     <div className="flex justify-between pt-2 border-t border-slate-50 pb-1 text-xs text-slate-400">
+                     <div className="flex justify-between pt-1 border-t border-slate-50 pb-1 text-xs text-slate-400">
                           <span className="flex items-center gap-1"><Calendar size={12}/> 烘焙日期</span>
                           <div className="flex items-center gap-1.5">
                               {restingDays !== null && (
