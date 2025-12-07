@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Bean, RoastLevel, BeanCategory, BlendPart } from '../types';
 import { ROAST_LEVELS, BEAN_CATEGORIES } from '../constants';
-import { Plus, Trash2, Scale, Calendar, Tag, Layers, X, Search, Pencil } from 'lucide-react';
+import { Plus, Trash2, Scale, Calendar, Tag, Layers, X, Search, Pencil, ChevronDown, CheckCircle } from 'lucide-react';
 import { CoffeeBeanIcon } from './CustomIcons';
 
 interface BeanManagerProps {
@@ -201,25 +201,31 @@ const BeanManager: React.FC<BeanManagerProps> = ({ beans, onAddBean, onUpdateBea
             />
 
             <div className="grid grid-cols-2 gap-3">
-              <select
-                className="p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none bg-white"
-                value={formData.category}
-                onChange={e => setFormData({ ...formData, category: e.target.value as BeanCategory })}
-              >
-                {BEAN_CATEGORIES.map(cat => (
-                  <option key={cat} value={cat}>{cat}</option>
-                ))}
-              </select>
+              <div className="relative">
+                <select
+                  className="w-full appearance-none bg-slate-50 hover:bg-slate-100 border border-slate-200 focus:bg-white focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 text-slate-700 rounded-xl px-4 py-3 pr-10 outline-none transition-all duration-200 cursor-pointer"
+                  value={formData.category}
+                  onChange={e => setFormData({ ...formData, category: e.target.value as BeanCategory })}
+                >
+                  {BEAN_CATEGORIES.map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+              </div>
               
-              <select
-                className="p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none bg-white"
-                value={formData.roastLevel}
-                onChange={e => setFormData({ ...formData, roastLevel: e.target.value as RoastLevel })}
-              >
-                {ROAST_LEVELS.map(level => (
-                  <option key={level} value={level}>{level} (整体)</option>
-                ))}
-              </select>
+              <div className="relative">
+                <select
+                  className="w-full appearance-none bg-slate-50 hover:bg-slate-100 border border-slate-200 focus:bg-white focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 text-slate-700 rounded-xl px-4 py-3 pr-10 outline-none transition-all duration-200 cursor-pointer"
+                  value={formData.roastLevel}
+                  onChange={e => setFormData({ ...formData, roastLevel: e.target.value as RoastLevel })}
+                >
+                  {ROAST_LEVELS.map(level => (
+                    <option key={level} value={level}>{level} (整体)</option>
+                  ))}
+                </select>
+                 <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+              </div>
             </div>
 
             {/* Conditional Rendering based on Category */}
@@ -289,13 +295,16 @@ const BeanManager: React.FC<BeanManagerProps> = ({ beans, onAddBean, onUpdateBea
                             value={newPart.process} 
                             onChange={e => setNewPart({...newPart, process: e.target.value})}
                         />
-                         <select 
-                            className="p-2 border rounded-lg text-sm bg-white"
-                            value={newPart.roastLevel} 
-                            onChange={e => setNewPart({...newPart, roastLevel: e.target.value as RoastLevel})}
-                        >
-                            {ROAST_LEVELS.map(l => <option key={l} value={l}>{l}</option>)}
-                        </select>
+                         <div className="relative">
+                            <select 
+                                className="w-full appearance-none bg-white border border-slate-200 text-slate-700 rounded-lg py-2 pl-3 pr-8 text-sm focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all cursor-pointer"
+                                value={newPart.roastLevel} 
+                                onChange={e => setNewPart({...newPart, roastLevel: e.target.value as RoastLevel})}
+                            >
+                                {ROAST_LEVELS.map(l => <option key={l} value={l}>{l}</option>)}
+                            </select>
+                            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={14} />
+                         </div>
                          <div className="flex gap-2">
                             <input 
                                 type="number" 
@@ -372,6 +381,31 @@ const BeanManager: React.FC<BeanManagerProps> = ({ beans, onAddBean, onUpdateBea
                 onChange={e => setFormData({ ...formData, tastingNotes: e.target.value })}
               />
             </div>
+            
+             {/* Active/Finished Status Toggle */}
+            <div className="col-span-1 md:col-span-2 bg-slate-50 p-3 rounded-xl flex items-center justify-between border border-slate-200">
+                <span className="text-sm font-medium text-slate-700">状态</span>
+                <div className="flex bg-white rounded-lg p-1 border border-slate-200">
+                    <button
+                        type="button"
+                        onClick={() => setFormData({...formData, isActive: true})}
+                        className={`px-4 py-1.5 rounded-md text-xs font-medium transition-all ${
+                            formData.isActive ? 'bg-amber-100 text-amber-700 shadow-sm' : 'text-slate-400 hover:text-slate-600'
+                        }`}
+                    >
+                        在喝
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setFormData({...formData, isActive: false})}
+                         className={`px-4 py-1.5 rounded-md text-xs font-medium transition-all ${
+                            !formData.isActive ? 'bg-slate-200 text-slate-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'
+                        }`}
+                    >
+                        喝完了
+                    </button>
+                </div>
+            </div>
 
             <div className="col-span-1 md:col-span-2 flex justify-end gap-3 mt-4">
               <button
@@ -399,10 +433,11 @@ const BeanManager: React.FC<BeanManagerProps> = ({ beans, onAddBean, onUpdateBea
            const percentage = bean.weight > 0 ? (bean.remainingWeight / bean.weight) * 100 : 0;
            const isLow = percentage < 20;
            const isBlend = bean.category === BeanCategory.BLEND;
+           const isFinished = !bean.isActive || bean.remainingWeight <= 0;
            
            return (
-            <div key={bean.id} className="bg-white rounded-xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow overflow-hidden group flex flex-col h-full active:scale-[0.99] transition-transform duration-100">
-              <div className="h-1.5 bg-amber-600"></div>
+            <div key={bean.id} className={`bg-white rounded-xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow overflow-hidden group flex flex-col h-full active:scale-[0.99] transition-transform duration-100 ${isFinished ? 'opacity-70 grayscale-[0.5]' : ''}`}>
+              <div className={`h-1.5 ${isFinished ? 'bg-slate-300' : 'bg-amber-600'}`}></div>
               <div className="p-4 md:p-5 flex-1 flex flex-col">
                 <div className="flex justify-between items-start mb-2 gap-2">
                   <div className="min-w-0">
@@ -424,7 +459,7 @@ const BeanManager: React.FC<BeanManagerProps> = ({ beans, onAddBean, onUpdateBea
                     </div>
                     <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
                         <div 
-                            className={`h-full rounded-full transition-all duration-500 ${isLow ? 'bg-red-400' : 'bg-emerald-500'}`} 
+                            className={`h-full rounded-full transition-all duration-500 ${isFinished ? 'bg-slate-300' : isLow ? 'bg-red-400' : 'bg-emerald-500'}`} 
                             style={{width: `${Math.min(100, Math.max(0, percentage))}%`}}
                         ></div>
                     </div>
@@ -466,7 +501,7 @@ const BeanManager: React.FC<BeanManagerProps> = ({ beans, onAddBean, onUpdateBea
                   
                    <div className="flex justify-between pt-2 border-t border-slate-50 pb-1 text-xs text-slate-400">
                         <span className="flex items-center gap-1"><Calendar size={12}/> 烘焙日期</span>
-                        <span>{bean.roastDate || '未知'}</span>
+                        <span>{bean.roastDate ? bean.roastDate.replace(/-/g, '/') : '未知'}</span>
                    </div>
                 </div>
 

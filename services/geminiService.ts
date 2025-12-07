@@ -1,5 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
-import { BrewLog, Bean, Equipment, BeanCategory } from "../types";
+import { BrewLog, Bean, Equipment, BeanCategory, BrewMethod } from "../types";
 
 const apiKey = process.env.API_KEY || '';
 
@@ -19,6 +19,10 @@ export const analyzeBrew = async (log: BrewLog, bean: Bean, grinder?: Equipment,
 
   const grinderName = grinder ? `${grinder.brand || ''} ${grinder.name}` : '未指定磨豆机';
   const brewerName = brewer ? `${brewer.brand || ''} ${brewer.name}` : log.method;
+  
+  const isEspresso = log.method === BrewMethod.ESPRESSO;
+  const ratioLabel = isEspresso ? "粉液比" : "粉水比";
+  const outputLabel = isEspresso ? "液重" : "注水量";
 
   const prompt = `
     你是一位专业的咖啡师和感官评审。
@@ -29,7 +33,7 @@ export const analyzeBrew = async (log: BrewLog, bean: Bean, grinder?: Equipment,
     - 豆仓状态: 剩余 ${bean.remainingWeight}g / 初始 ${bean.weight}g
     - 冲煮设备: ${brewerName} (方式: ${log.method})
     - 磨豆机: ${grinderName} (刻度: ${log.grinderSetting})
-    - 粉液比: ${log.doseIn}g 粉, ${log.yieldOut}g 液 (比例 1:${(log.yieldOut / log.doseIn).toFixed(1)})
+    - ${ratioLabel}: ${log.doseIn}g 粉, ${log.yieldOut}g ${outputLabel} (比例 1:${(log.yieldOut / log.doseIn).toFixed(1)})
     - 时间: ${log.timeSeconds} 秒
     - 水温: ${log.temperature}°C
     

@@ -21,10 +21,10 @@ const Layout: React.FC<LayoutProps> = ({ activeTab, setActiveTab, children }) =>
   return (
     <div className="h-screen bg-slate-50 text-slate-900 flex flex-col md:flex-row overflow-hidden">
       
-      {/* Mobile Top Header */}
-      <header className="md:hidden fixed top-0 left-0 right-0 h-14 bg-white/80 backdrop-blur-md border-b border-slate-200 z-50 flex items-center px-4">
-        <div className="flex items-center gap-2 text-amber-700 font-bold text-lg">
-           <Coffee className="stroke-2 w-5 h-5" />
+      {/* Mobile Top Header - Orange background, extra top padding for status bar */}
+      <header className="md:hidden fixed top-0 left-0 right-0 bg-amber-600 text-white shadow-md z-50 flex items-center px-6 pt-12 pb-4 transition-all">
+        <div className="flex items-center gap-2 font-bold text-xl">
+           <Coffee className="stroke-2 w-6 h-6" />
            <span>Coffee</span>
         </div>
       </header>
@@ -62,8 +62,8 @@ const Layout: React.FC<LayoutProps> = ({ activeTab, setActiveTab, children }) =>
         </div>
       </nav>
 
-      {/* Main Content Area */}
-      <main className="flex-1 overflow-y-auto overflow-x-hidden md:p-8 pt-16 pb-24 md:pb-8 px-4 w-full scroll-smooth">
+      {/* Main Content Area - Increased top padding for mobile (pt-28) to account for taller header */}
+      <main className="flex-1 overflow-y-auto overflow-x-hidden md:p-8 pt-28 pb-24 md:pb-8 px-4 w-full scroll-smooth">
         <div className="max-w-5xl mx-auto animate-in fade-in duration-300">
            {children}
         </div>

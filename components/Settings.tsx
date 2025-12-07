@@ -73,24 +73,24 @@ const Settings: React.FC<SettingsProps> = ({ beans, logs, equipment, onImportSuc
   };
 
   return (
-    <div className="space-y-6">
-       <h2 className="text-2xl font-bold text-slate-800">数据归档与管理</h2>
+    <div className="space-y-4 md:space-y-6 pb-20 md:pb-0">
+       <h2 className="text-xl md:text-2xl font-bold text-slate-800">数据归档与管理</h2>
        
-       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
          {/* Export Section */}
-         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-            <div className="flex items-center gap-3 mb-4 text-amber-700">
+         <div className="bg-white p-4 md:p-6 rounded-xl shadow-sm border border-slate-100">
+            <div className="flex items-center gap-3 mb-3 md:mb-4 text-amber-700">
                 <div className="p-2 bg-amber-50 rounded-lg">
                     <Download size={24} />
                 </div>
                 <h3 className="text-lg font-semibold">导出数据 (备份)</h3>
             </div>
-            <p className="text-slate-600 text-sm mb-6">
+            <p className="text-slate-600 text-sm mb-4 md:mb-6 leading-relaxed">
                 将您的所有咖啡豆、冲煮记录和设备数据导出为 JSON 文件。建议定期备份以防数据丢失。
             </p>
             <button 
                 onClick={handleExport}
-                className="w-full py-3 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                className="w-full py-3 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-medium transition-colors flex items-center justify-center gap-2 shadow-sm active:scale-[0.98]"
             >
                 <Download size={18} />
                 下载备份文件
@@ -98,14 +98,14 @@ const Settings: React.FC<SettingsProps> = ({ beans, logs, equipment, onImportSuc
          </div>
 
          {/* Import Section */}
-         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-            <div className="flex items-center gap-3 mb-4 text-slate-700">
+         <div className="bg-white p-4 md:p-6 rounded-xl shadow-sm border border-slate-100">
+            <div className="flex items-center gap-3 mb-3 md:mb-4 text-slate-700">
                 <div className="p-2 bg-slate-100 rounded-lg">
                     <Upload size={24} />
                 </div>
                 <h3 className="text-lg font-semibold">导入数据 (恢复)</h3>
             </div>
-            <p className="text-slate-600 text-sm mb-6">
+            <p className="text-slate-600 text-sm mb-4 md:mb-6 leading-relaxed">
                 从之前的备份文件中恢复数据。注意：这将覆盖当前的现有数据，请谨慎操作。
             </p>
             
@@ -119,20 +119,20 @@ const Settings: React.FC<SettingsProps> = ({ beans, logs, equipment, onImportSuc
             
             <button 
                 onClick={() => fileInputRef.current?.click()}
-                className="w-full py-3 bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                className="w-full py-3 bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 rounded-xl font-medium transition-colors flex items-center justify-center gap-2 shadow-sm active:scale-[0.98]"
             >
                 <Upload size={18} />
                 选择备份文件
             </button>
 
             {importStatus === 'success' && (
-                <div className="mt-4 p-3 bg-green-50 text-green-700 text-sm rounded-lg flex items-center gap-2">
+                <div className="mt-4 p-3 bg-green-50 text-green-700 text-sm rounded-lg flex items-center gap-2 animate-in fade-in">
                     <CheckCircle2 size={16} />
                     {statusMessage}
                 </div>
             )}
             {importStatus === 'error' && (
-                 <div className="mt-4 p-3 bg-red-50 text-red-700 text-sm rounded-lg flex items-center gap-2">
+                 <div className="mt-4 p-3 bg-red-50 text-red-700 text-sm rounded-lg flex items-center gap-2 animate-in fade-in">
                     <AlertCircle size={16} />
                     {statusMessage}
                 </div>
@@ -140,7 +140,7 @@ const Settings: React.FC<SettingsProps> = ({ beans, logs, equipment, onImportSuc
          </div>
        </div>
 
-       <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 text-xs text-slate-500">
+       <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs text-slate-500">
            <p className="font-semibold mb-1">隐私说明</p>
            <p>Coffee 所有数据均存储在您的本地浏览器中，不会上传到任何云端服务器。请妥善保管您的导出文件。</p>
        </div>

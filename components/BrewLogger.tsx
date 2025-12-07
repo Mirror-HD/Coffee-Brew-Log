@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Bean, BrewLog, BrewMethod, Equipment, EquipmentType } from '../types';
 import { BREW_METHODS } from '../constants';
-import { Droplet, Clock, Thermometer, Star, Plus, ChevronDown, ChevronUp, Settings2, PenTool, X } from 'lucide-react';
+import { Droplet, Clock, Thermometer, Plus, ChevronDown, ChevronUp, Settings2, X } from 'lucide-react';
 
 interface BrewLoggerProps {
   logs: BrewLog[];
@@ -26,7 +26,7 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
     grinderId: '',
     brewerId: '',
     grinderSetting: '3.0',
-    rating: 0,
+    rating: undefined,
     notes: '',
   });
 
@@ -65,7 +65,7 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
       brewerId: formData.brewerId,
       
       grinderSetting: formData.grinderSetting || '',
-      rating: Number(formData.rating),
+      rating: formData.rating, // Can be undefined
       notes: formData.notes || '',
     };
 
@@ -75,7 +75,7 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
     setFormData(prev => ({
       ...prev,
       notes: '',
-      rating: 0,
+      rating: undefined,
     }));
   };
 
@@ -90,6 +90,9 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
       const eq = equipment.find(e => e.id === id);
       return eq ? eq.name : '';
   };
+
+  // Helper to determine labels based on method
+  const isEspresso = (method?: string) => method === BrewMethod.ESPRESSO;
 
   return (
     <div className="space-y-4 md:space-y-6 pb-20 md:pb-0">
@@ -114,30 +117,36 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
 
             <div className="lg:col-span-2">
               <label className="block text-xs font-medium text-slate-500 mb-1">咖啡豆 (库存)</label>
-              <select
-                className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none bg-white"
-                value={formData.beanId || ''}
-                onChange={e => setFormData({ ...formData, beanId: e.target.value })}
-                required
-              >
-                <option value="">选择咖啡豆</option>
-                {beans.map(bean => (
-                  <option key={bean.id} value={bean.id}>
-                      {bean.name} - {bean.remainingWeight.toFixed(0)}g 剩余
-                  </option>
-                ))}
-              </select>
+              <div className="relative">
+                <select
+                    className="w-full appearance-none bg-slate-50 hover:bg-slate-100 border border-slate-200 focus:bg-white focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 text-slate-700 rounded-xl px-4 py-3 pr-10 outline-none transition-all duration-200 cursor-pointer"
+                    value={formData.beanId || ''}
+                    onChange={e => setFormData({ ...formData, beanId: e.target.value })}
+                    required
+                >
+                    <option value="">选择咖啡豆</option>
+                    {beans.map(bean => (
+                    <option key={bean.id} value={bean.id}>
+                        {bean.name} - {bean.remainingWeight.toFixed(0)}g 剩余
+                    </option>
+                    ))}
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+              </div>
             </div>
 
             <div className="lg:col-span-2">
               <label className="block text-xs font-medium text-slate-500 mb-1">冲煮方式</label>
-              <select
-                className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none bg-white"
-                value={formData.method}
-                onChange={e => setFormData({ ...formData, method: e.target.value as BrewMethod })}
-              >
-                {BREW_METHODS.map(m => <option key={m} value={m}>{m}</option>)}
-              </select>
+              <div className="relative">
+                <select
+                    className="w-full appearance-none bg-slate-50 hover:bg-slate-100 border border-slate-200 focus:bg-white focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 text-slate-700 rounded-xl px-4 py-3 pr-10 outline-none transition-all duration-200 cursor-pointer"
+                    value={formData.method}
+                    onChange={e => setFormData({ ...formData, method: e.target.value as BrewMethod })}
+                >
+                    {BREW_METHODS.map(m => <option key={m} value={m}>{m}</option>)}
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3 col-span-1 md:col-span-2">
@@ -152,7 +161,9 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
                     />
                 </div>
                 <div>
-                     <label className="block text-xs font-medium text-slate-500 mb-1">液重(g)</label>
+                     <label className="block text-xs font-medium text-slate-500 mb-1">
+                       {isEspresso(formData.method as string) ? '液重(g)' : '注入水量(g)'}
+                     </label>
                     <input
                         type="number"
                         step="0.1"
@@ -186,16 +197,19 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
             
             <div className="lg:col-span-2">
                 <label className="block text-xs font-medium text-slate-500 mb-1">磨豆机</label>
-                 <select
-                    className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none bg-white"
-                    value={formData.grinderId || ''}
-                    onChange={e => setFormData({ ...formData, grinderId: e.target.value })}
-                >
-                    <option value="">选择磨豆机</option>
-                    {grinders.map(g => (
-                        <option key={g.id} value={g.id}>{g.name} {g.brand ? `(${g.brand})` : ''}</option>
-                    ))}
-                </select>
+                 <div className="relative">
+                    <select
+                        className="w-full appearance-none bg-slate-50 hover:bg-slate-100 border border-slate-200 focus:bg-white focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 text-slate-700 rounded-xl px-4 py-3 pr-10 outline-none transition-all duration-200 cursor-pointer"
+                        value={formData.grinderId || ''}
+                        onChange={e => setFormData({ ...formData, grinderId: e.target.value })}
+                    >
+                        <option value="">选择磨豆机</option>
+                        {grinders.map(g => (
+                            <option key={g.id} value={g.id}>{g.name} {g.brand ? `(${g.brand})` : ''}</option>
+                        ))}
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                 </div>
             </div>
 
              <div className="lg:col-span-2">
@@ -211,28 +225,35 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
             
             <div className="lg:col-span-2">
               <label className="block text-xs font-medium text-slate-500 mb-1">滤杯/设备</label>
-              <select
-                className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none bg-white"
-                value={formData.brewerId || ''}
-                onChange={e => setFormData({ ...formData, brewerId: e.target.value })}
-              >
-                <option value="">未指定 (默认)</option>
-                {brewers.map(b => (
-                    <option key={b.id} value={b.id}>{b.name} {b.brand ? `(${b.brand})` : ''}</option>
-                ))}
-              </select>
+              <div className="relative">
+                <select
+                    className="w-full appearance-none bg-slate-50 hover:bg-slate-100 border border-slate-200 focus:bg-white focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 text-slate-700 rounded-xl px-4 py-3 pr-10 outline-none transition-all duration-200 cursor-pointer"
+                    value={formData.brewerId || ''}
+                    onChange={e => setFormData({ ...formData, brewerId: e.target.value })}
+                >
+                    <option value="">未指定 (默认)</option>
+                    {brewers.map(b => (
+                        <option key={b.id} value={b.id}>{b.name} {b.brand ? `(${b.brand})` : ''}</option>
+                    ))}
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+              </div>
             </div>
 
              <div className="col-span-1 md:col-span-2 lg:col-span-2">
-              <label className="block text-xs font-medium text-slate-500 mb-1">评分 (1-10)</label>
+              <label className="block text-xs font-medium text-slate-500 mb-1">评分 (可选 1-10)</label>
               <input
                 type="number"
                 min="1"
                 max="10"
                 step="0.5"
-                className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none font-bold text-amber-600"
-                value={formData.rating}
-                onChange={e => setFormData({ ...formData, rating: parseFloat(e.target.value) })}
+                placeholder="-"
+                className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none font-bold text-amber-600 placeholder:text-slate-300"
+                value={formData.rating === undefined ? '' : formData.rating}
+                onChange={e => {
+                    const val = e.target.value;
+                    setFormData({ ...formData, rating: val === '' ? undefined : parseFloat(val) })
+                }}
               />
             </div>
 
@@ -272,6 +293,7 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
           const isExpanded = expandedLogId === log.id;
           const grinderName = getEquipmentName(log.grinderId);
           const brewerName = getEquipmentName(log.brewerId);
+          const isLogEspresso = isEspresso(log.method);
 
           return (
             <div key={log.id} className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden active:scale-[0.99] transition-transform duration-100">
@@ -280,8 +302,12 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
                 onClick={() => setExpandedLogId(isExpanded ? null : log.id)}
               >
                 <div className="flex items-center gap-3 md:gap-4 overflow-hidden">
-                  <div className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex-shrink-0 flex items-center justify-center font-bold text-white shadow-sm text-sm md:text-base ${log.rating >= 8 ? 'bg-amber-500' : log.rating >= 6 ? 'bg-amber-400' : 'bg-slate-400'}`}>
-                    {log.rating}
+                  <div className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex-shrink-0 flex items-center justify-center font-bold text-white shadow-sm text-sm md:text-base ${
+                      log.rating === undefined 
+                        ? 'bg-slate-200 text-slate-400' 
+                        : log.rating >= 8 ? 'bg-amber-500' : log.rating >= 6 ? 'bg-amber-400' : 'bg-slate-400'
+                    }`}>
+                    {log.rating !== undefined ? log.rating : '-'}
                   </div>
                   <div className="min-w-0">
                     <h4 className="font-bold text-slate-800 text-sm md:text-base truncate">{bean?.name || '未知咖啡豆'}</h4>
@@ -299,7 +325,9 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
                     <div className="flex items-center gap-2 text-slate-600">
                        <div className="p-1.5 bg-white rounded-md shadow-sm text-amber-600"><Droplet size={14} /></div>
                        <div className="text-xs">
-                         <span className="block text-[10px] text-slate-400">粉液比</span>
+                         <span className="block text-[10px] text-slate-400">
+                             {isLogEspresso ? '粉液比' : '粉水比'}
+                         </span>
                          {log.doseIn}g / {log.yieldOut}g
                        </div>
                     </div>
@@ -333,9 +361,11 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
                       </div>
                   )}
 
-                  <div className="bg-white p-3 rounded-lg border border-slate-200 mb-1">
-                    <p className="text-sm text-slate-700 italic">"{log.notes}"</p>
-                  </div>
+                  {log.notes && (
+                      <div className="bg-white p-3 rounded-lg border border-slate-200 mb-1">
+                        <p className="text-sm text-slate-700 italic">"{log.notes}"</p>
+                      </div>
+                  )}
                 </div>
               )}
             </div>

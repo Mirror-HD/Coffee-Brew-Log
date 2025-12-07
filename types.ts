@@ -82,7 +82,7 @@ export interface BrewLog {
   yieldOut: number; // grams
   timeSeconds: number;
   temperature: number; // Celsius
-  rating: number; // 1-10
+  rating?: number; // 1-10, Optional
   notes: string;
 }
 
