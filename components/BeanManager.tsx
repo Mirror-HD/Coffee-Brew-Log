@@ -19,14 +19,22 @@ const BeanManager: React.FC<BeanManagerProps> = ({ beans, onAddBean, onUpdateBea
   
   // Blend Parts State
   const [blendParts, setBlendParts] = useState<BlendPart[]>([]);
-  const [newPart, setNewPart] = useState<BlendPart>({
+  // Use string for ratio input to avoid parsing bugs while typing
+  const [newPart, setNewPart] = useState<{
+      origin: string;
+      process: string;
+      roastLevel: RoastLevel;
+      ratio: string;
+  }>({
       origin: '',
       process: '',
       roastLevel: RoastLevel.MEDIUM,
-      ratio: undefined
+      ratio: ''
   });
 
-  const [formData, setFormData] = useState<Partial<Bean>>({
+  // Use 'any' to allow strings in number fields (fixes decimal input bug)
+  const [formData, setFormData] = useState<any>({
+    id: undefined,
     name: '',
     roaster: '',
     roastLevel: RoastLevel.MEDIUM,
@@ -37,16 +45,20 @@ const BeanManager: React.FC<BeanManagerProps> = ({ beans, onAddBean, onUpdateBea
     category: BeanCategory.SINGLE_ORIGIN,
     purchaseDate: '',
     roastDate: '',
-    price: 0,
-    weight: 250,
-    remainingWeight: 250,
-    isActive: true
+    price: '',           
+    weight: '250',       
+    remainingWeight: '250',
+    isActive: true,
+    dateAdded: undefined
   });
 
   const handleAddBlendPart = () => {
     if (!newPart.origin) return;
-    setBlendParts([...blendParts, newPart]);
-    setNewPart({ origin: '', process: '', roastLevel: RoastLevel.MEDIUM, ratio: undefined });
+    setBlendParts([...blendParts, {
+        ...newPart,
+        ratio: newPart.ratio ? parseFloat(newPart.ratio) : undefined
+    }]);
+    setNewPart({ origin: '', process: '', roastLevel: RoastLevel.MEDIUM, ratio: '' });
   };
 
   const handleRemoveBlendPart = (index: number) => {
@@ -69,9 +81,9 @@ const BeanManager: React.FC<BeanManagerProps> = ({ beans, onAddBean, onUpdateBea
         category: BeanCategory.SINGLE_ORIGIN,
         purchaseDate: '',
         roastDate: '',
-        price: 0,
-        weight: 250,
-        remainingWeight: 250,
+        price: '',
+        weight: '250',
+        remainingWeight: '250',
         isActive: true,
         dateAdded: undefined
       });
@@ -86,6 +98,10 @@ const BeanManager: React.FC<BeanManagerProps> = ({ beans, onAddBean, onUpdateBea
         roastDate: bean.roastDate || '',
         tastingNotes: bean.tastingNotes || '',
         variety: bean.variety || '',
+        price: bean.price !== undefined ? bean.price.toString() : '',
+        // Convert numbers to string for inputs
+        weight: bean.weight.toString(),
+        remainingWeight: bean.remainingWeight.toString()
     });
     setBlendParts(bean.blendParts || []);
     // If roastDate is empty string, assume it was unknown
@@ -97,7 +113,11 @@ const BeanManager: React.FC<BeanManagerProps> = ({ beans, onAddBean, onUpdateBea
     e.preventDefault();
     if (!formData.name || !formData.roaster) return;
 
-    const initialWeight = Number(formData.weight) || 0;
+    // Parse numbers on submit, not on change
+    const initialWeight = parseFloat(formData.weight) || 0;
+    const currentRemaining = parseFloat(formData.remainingWeight) || 0;
+    const priceVal = formData.price === '' ? undefined : parseFloat(formData.price);
+
     const isBlend = formData.category === BeanCategory.BLEND;
 
     // Determine aggregate values for display if blend
@@ -119,9 +139,9 @@ const BeanManager: React.FC<BeanManagerProps> = ({ beans, onAddBean, onUpdateBea
 
       purchaseDate: formData.purchaseDate,
       roastDate: isRoastDateUnknown ? '' : formData.roastDate, 
-      price: Number(formData.price),
+      price: priceVal,
       weight: initialWeight,
-      remainingWeight: formData.id ? Number(formData.remainingWeight) : initialWeight, // Preserve remaining if editing
+      remainingWeight: currentRemaining,
       isActive: formData.isActive ?? true,
       dateAdded: formData.dateAdded || Date.now(),
     };
@@ -291,13 +311,12 @@ const BeanManager: React.FC<BeanManagerProps> = ({ beans, onAddBean, onUpdateBea
                          <div className="flex gap-2">
                             <input 
                                 type="number" 
+                                step="0.1"
                                 placeholder="%" 
                                 className="p-2 border rounded-lg text-sm w-full"
-                                value={newPart.ratio === undefined ? '' : newPart.ratio} 
-                                onChange={e => {
-                                  const val = e.target.value;
-                                  setNewPart({...newPart, ratio: val === '' ? undefined : parseFloat(val)})
-                                }}
+                                value={newPart.ratio} 
+                                onChange={e => setNewPart({...newPart, ratio: e.target.value})}
+                                onWheel={(e) => e.currentTarget.blur()}
                             />
                             <button 
                                 type="button" 
@@ -311,23 +330,46 @@ const BeanManager: React.FC<BeanManagerProps> = ({ beans, onAddBean, onUpdateBea
                 </div>
             )}
 
-            <div className="col-span-1 md:col-span-2 grid grid-cols-3 gap-3">
+            <div className="col-span-1 md:col-span-2 grid grid-cols-2 md:grid-cols-4 gap-3">
               <div className="col-span-1">
                  <label className="block text-xs text-slate-500 mb-1">规格(g)</label>
                  <input
                   type="number"
+                  step="0.1"
                   className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none"
                   value={formData.weight}
-                  onChange={e => setFormData({ ...formData, weight: parseFloat(e.target.value) })}
+                  onChange={e => {
+                    const val = e.target.value;
+                    setFormData((prev: any) => ({ 
+                      ...prev, 
+                      weight: val,
+                      // If creating new bean, sync remaining with weight automatically for convenience
+                      remainingWeight: !prev.id ? val : prev.remainingWeight 
+                    }));
+                  }}
+                  onWheel={(e) => e.currentTarget.blur()}
+                />
+              </div>
+              <div className="col-span-1">
+                 <label className="block text-xs text-slate-500 mb-1">剩余(g)</label>
+                 <input
+                  type="number"
+                  step="0.1"
+                  className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none"
+                  value={formData.remainingWeight}
+                  onChange={e => setFormData({ ...formData, remainingWeight: e.target.value })}
+                  onWheel={(e) => e.currentTarget.blur()}
                 />
               </div>
               <div className="col-span-1">
                  <label className="block text-xs text-slate-500 mb-1">价格(¥)</label>
                  <input
                   type="number"
+                  step="0.1"
                   className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none"
                   value={formData.price}
-                  onChange={e => setFormData({ ...formData, price: parseFloat(e.target.value) })}
+                  onChange={e => setFormData({ ...formData, price: e.target.value })}
+                  onWheel={(e) => e.currentTarget.blur()}
                 />
               </div>
               <div className="col-span-1">
@@ -437,7 +479,7 @@ const BeanManager: React.FC<BeanManagerProps> = ({ beans, onAddBean, onUpdateBea
                     <div className="flex justify-between text-xs mb-1">
                         <span className="text-slate-500 flex items-center gap-1"><Scale size={12}/> 库存</span>
                         <span className={`font-medium ${isLow ? 'text-red-500' : 'text-slate-700'}`}>
-                            {bean.remainingWeight.toFixed(0)}g / {bean.weight}g
+                            {Number(bean.remainingWeight).toFixed(1).replace(/\.0$/, '')}g / {Number(bean.weight).toFixed(1).replace(/\.0$/, '')}g
                         </span>
                     </div>
                     <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">

@@ -54,6 +54,12 @@ const App: React.FC = () => {
     saveLogs(updated);
   };
 
+  const handleDeleteLog = (id: string) => {
+    const updated = logs.filter(l => l.id !== id);
+    setLogs(updated);
+    saveLogs(updated);
+  };
+
   const handleAddEquipment = (newEquipment: Equipment) => {
     const updated = [...equipment, newEquipment];
     setEquipment(updated);
@@ -98,6 +104,7 @@ const App: React.FC = () => {
           equipment={equipment}
           onAddLog={handleAddLog}
           onUpdateLog={handleUpdateLog}
+          onDeleteLog={handleDeleteLog}
           onUpdateBean={handleUpdateBean}
         />
       )}

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Bean, BrewLog, BrewMethod, Equipment, EquipmentType } from '../types';
 import { BREW_METHODS } from '../constants';
-import { Droplet, Clock, Thermometer, Plus, ChevronDown, ChevronUp, Settings2, X } from 'lucide-react';
+import { Droplet, Clock, Thermometer, Plus, ChevronDown, ChevronUp, Settings2, X, Pencil, Trash2 } from 'lucide-react';
 import CustomSelect from './CustomSelect';
 
 interface BrewLoggerProps {
@@ -10,29 +10,68 @@ interface BrewLoggerProps {
   equipment: Equipment[];
   onAddLog: (log: BrewLog) => void;
   onUpdateLog: (log: BrewLog) => void;
+  onDeleteLog: (id: string) => void;
   onUpdateBean?: (bean: Bean) => void; 
 }
 
-const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLog, onUpdateLog, onUpdateBean }) => {
+const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLog, onUpdateLog, onDeleteLog, onUpdateBean }) => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [expandedLogId, setExpandedLogId] = useState<string | null>(null);
 
-  // Form State
-  const [formData, setFormData] = useState<Partial<BrewLog>>({
+  // Form State - Using 'any' to allow strings for numeric fields during editing (fixes decimal input bugs)
+  const [formData, setFormData] = useState<any>({
     method: BrewMethod.V60,
-    doseIn: 15,
-    yieldOut: 225,
-    timeSeconds: 150,
-    temperature: 92,
+    doseIn: '15',
+    yieldOut: '225',
+    timeSeconds: '150',
+    temperature: '92',
     grinderId: '',
     brewerId: '',
     grinderSetting: '3.0',
-    rating: undefined,
+    rating: '',
     notes: '',
   });
 
   const grinders = equipment.filter(e => e.type === EquipmentType.GRINDER);
   const brewers = equipment.filter(e => e.type === EquipmentType.BREWER || e.type === EquipmentType.OTHER);
+
+  const resetForm = () => {
+    setFormData({
+      id: undefined,
+      method: BrewMethod.V60,
+      doseIn: '15',
+      yieldOut: '225',
+      timeSeconds: '150',
+      temperature: '92',
+      grinderId: '',
+      brewerId: '',
+      grinderSetting: '3.0',
+      rating: '',
+      notes: '',
+      beanId: undefined, 
+    });
+    setIsFormOpen(false);
+  };
+
+  const handleEdit = (log: BrewLog) => {
+    // Convert numbers to strings for form state
+    setFormData({
+        ...log,
+        doseIn: log.doseIn.toString(),
+        yieldOut: log.yieldOut.toString(),
+        timeSeconds: log.timeSeconds.toString(),
+        temperature: log.temperature.toString(),
+        rating: log.rating !== undefined ? log.rating.toString() : '',
+    });
+    setIsFormOpen(true);
+  };
+
+  const handleDelete = (id: string) => {
+    if (window.confirm('确定要删除这条冲煮记录吗？')) {
+      onDeleteLog(id);
+      if (expandedLogId === id) setExpandedLogId(null);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,10 +80,14 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
       return;
     }
 
-    const dose = Number(formData.doseIn);
+    const dose = parseFloat(formData.doseIn) || 0;
+    const yieldVal = parseFloat(formData.yieldOut) || 0;
+    const timeVal = parseFloat(formData.timeSeconds) || 0;
+    const tempVal = parseFloat(formData.temperature) || 0;
+    const ratingVal = formData.rating ? parseFloat(formData.rating) : undefined;
     
-    // Inventory Management
-    if (onUpdateBean) {
+    // Only deduct inventory for NEW logs to avoid double deduction on edit
+    if (!formData.id && onUpdateBean) {
         const selectedBean = beans.find(b => b.id === formData.beanId);
         if (selectedBean) {
             const newRemaining = Math.max(0, selectedBean.remainingWeight - dose);
@@ -52,32 +95,31 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
         }
     }
 
-    const newLog: BrewLog = {
-      id: crypto.randomUUID(),
-      beanId: formData.beanId!,
-      date: Date.now(),
+    const logData: BrewLog = {
+      id: formData.id || crypto.randomUUID(),
+      beanId: formData.beanId,
+      date: formData.date || Date.now(),
       method: formData.method as BrewMethod,
       doseIn: dose,
-      yieldOut: Number(formData.yieldOut),
-      timeSeconds: Number(formData.timeSeconds),
-      temperature: Number(formData.temperature),
+      yieldOut: yieldVal,
+      timeSeconds: timeVal,
+      temperature: tempVal,
       
       grinderId: formData.grinderId,
       brewerId: formData.brewerId,
       
       grinderSetting: formData.grinderSetting || '',
-      rating: formData.rating, // Can be undefined
+      rating: ratingVal,
       notes: formData.notes || '',
     };
 
-    onAddLog(newLog);
-    setIsFormOpen(false);
-    // Reset specific fields but keep settings that might be reused
-    setFormData(prev => ({
-      ...prev,
-      notes: '',
-      rating: undefined,
-    }));
+    if (formData.id) {
+        onUpdateLog(logData);
+    } else {
+        onAddLog(logData);
+    }
+
+    resetForm();
   };
 
   const formatTime = (seconds: number) => {
@@ -100,7 +142,7 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <h2 className="text-xl md:text-2xl font-bold text-slate-800">冲煮记录</h2>
         <button
-          onClick={() => setIsFormOpen(!isFormOpen)}
+          onClick={() => { resetForm(); setIsFormOpen(true); }}
           className="w-full md:w-auto flex items-center justify-center gap-2 bg-amber-700 hover:bg-amber-800 text-white px-4 py-2.5 rounded-xl transition-all shadow-sm active:scale-95"
         >
           <Plus size={18} />
@@ -112,8 +154,8 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
         <div className="bg-white p-4 md:p-6 rounded-2xl shadow-xl border border-slate-100 animate-in fade-in slide-in-from-top-4">
           <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="col-span-1 md:col-span-2 lg:col-span-4 flex justify-between items-center mb-2">
-              <h3 className="text-lg font-bold text-slate-700">新冲煮</h3>
-              <button type="button" onClick={() => setIsFormOpen(false)} className="text-slate-400 p-2"><X size={20}/></button>
+              <h3 className="text-lg font-bold text-slate-700">{formData.id ? '编辑冲煮记录' : '新冲煮'}</h3>
+              <button type="button" onClick={resetForm} className="text-slate-400 p-2"><X size={20}/></button>
             </div>
 
             <div className="lg:col-span-2">
@@ -124,7 +166,7 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
                 placeholder="选择咖啡豆"
                 options={beans.map(bean => ({
                     value: bean.id,
-                    label: `${bean.name} - ${bean.remainingWeight.toFixed(0)}g 剩余`
+                    label: `${bean.name} - ${Number(bean.remainingWeight).toFixed(1).replace(/\.0$/, '')}g 剩余`
                 }))}
               />
             </div>
@@ -146,7 +188,8 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
                         step="0.1"
                         className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none text-center font-mono"
                         value={formData.doseIn}
-                        onChange={e => setFormData({ ...formData, doseIn: parseFloat(e.target.value) })}
+                        onChange={e => setFormData({ ...formData, doseIn: e.target.value })}
+                        onWheel={(e) => e.currentTarget.blur()}
                     />
                 </div>
                 <div>
@@ -158,7 +201,8 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
                         step="0.1"
                         className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none text-center font-mono"
                         value={formData.yieldOut}
-                        onChange={e => setFormData({ ...formData, yieldOut: parseFloat(e.target.value) })}
+                        onChange={e => setFormData({ ...formData, yieldOut: e.target.value })}
+                        onWheel={(e) => e.currentTarget.blur()}
                     />
                 </div>
             </div>
@@ -168,18 +212,22 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
                     <label className="block text-xs font-medium text-slate-500 mb-1">时间(s)</label>
                     <input
                         type="number"
+                        step="0.1"
                         className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none text-center font-mono"
                         value={formData.timeSeconds}
-                        onChange={e => setFormData({ ...formData, timeSeconds: parseFloat(e.target.value) })}
+                        onChange={e => setFormData({ ...formData, timeSeconds: e.target.value })}
+                        onWheel={(e) => e.currentTarget.blur()}
                     />
                 </div>
                 <div>
                      <label className="block text-xs font-medium text-slate-500 mb-1">水温(°C)</label>
                     <input
                         type="number"
+                        step="0.1"
                         className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none text-center font-mono"
                         value={formData.temperature}
-                        onChange={e => setFormData({ ...formData, temperature: parseFloat(e.target.value) })}
+                        onChange={e => setFormData({ ...formData, temperature: e.target.value })}
+                        onWheel={(e) => e.currentTarget.blur()}
                     />
                 </div>
             </div>
@@ -233,14 +281,12 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
                 type="number"
                 min="1"
                 max="10"
-                step="0.5"
+                step="0.1"
                 placeholder="-"
                 className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none font-bold text-amber-600 placeholder:text-slate-300"
-                value={formData.rating === undefined ? '' : formData.rating}
-                onChange={e => {
-                    const val = e.target.value;
-                    setFormData({ ...formData, rating: val === '' ? undefined : parseFloat(val) })
-                }}
+                value={formData.rating}
+                onChange={e => setFormData({ ...formData, rating: e.target.value })}
+                onWheel={(e) => e.currentTarget.blur()}
               />
             </div>
 
@@ -258,7 +304,7 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
             <div className="col-span-1 md:col-span-2 lg:col-span-4 flex justify-end gap-3 mt-4">
               <button
                 type="button"
-                onClick={() => setIsFormOpen(false)}
+                onClick={resetForm}
                 className="px-6 py-3 rounded-xl text-slate-500 hover:bg-slate-50 font-medium"
               >
                 取消
@@ -267,7 +313,7 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
                 type="submit"
                 className="px-6 py-3 bg-amber-600 text-white rounded-xl hover:bg-amber-700 font-bold shadow-md shadow-amber-200"
               >
-                保存
+                {formData.id ? '保存修改' : '保存记录'}
               </button>
             </div>
           </form>
@@ -353,6 +399,21 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
                         <p className="text-sm text-slate-700 italic">"{log.notes}"</p>
                       </div>
                   )}
+
+                  <div className="mt-4 pt-3 border-t border-slate-200 flex justify-end gap-3">
+                    <button
+                        onClick={() => handleEdit(log)}
+                        className="flex items-center gap-1 text-slate-400 hover:text-amber-600 transition-colors py-1 px-2 hover:bg-slate-100 rounded-lg text-xs"
+                    >
+                        <Pencil size={14} /> 编辑
+                    </button>
+                    <button
+                        onClick={() => handleDelete(log.id)}
+                        className="flex items-center gap-1 text-slate-400 hover:text-red-500 transition-colors py-1 px-2 hover:bg-slate-100 rounded-lg text-xs"
+                    >
+                        <Trash2 size={14} /> 删除
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
