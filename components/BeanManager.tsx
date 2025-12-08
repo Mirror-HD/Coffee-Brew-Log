@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Bean, RoastLevel, BeanCategory, BlendPart, BeanOwner } from '../types';
 import { ROAST_LEVELS, BEAN_CATEGORIES, BEAN_OWNERS } from '../constants';
-import { Plus, Trash2, Scale, Calendar, Layers, X, Search, Pencil, CheckCircle2, AlertTriangle, User, Users, Coins } from 'lucide-react';
+import { Plus, Trash2, Scale, Calendar, Layers, X, Search, Pencil, CheckCircle2, AlertTriangle, User, Users, Coins, ArrowDown } from 'lucide-react';
 import { CoffeeBeanIcon } from './CustomIcons';
 import CustomSelect from './CustomSelect';
 
@@ -134,8 +134,11 @@ const BeanManager: React.FC<BeanManagerProps> = ({ beans, onAddBean, onUpdateBea
     e.preventDefault();
     if (!formData.name || !formData.roaster) return;
 
+    // Logic: If Club owner, remaining weight is technically irrelevant/unlimited for display, 
+    // but we save it as 0 or the full weight to avoid NaN. Let's save 0 for logic consistency.
+    const isClub = formData.owner === BeanOwner.CLUB;
     const initialWeight = parseFloat(formData.weight) || 0;
-    const currentRemaining = parseFloat(formData.remainingWeight) || 0;
+    const currentRemaining = isClub ? 0 : (parseFloat(formData.remainingWeight) || 0);
     const priceVal = formData.price === '' ? undefined : parseFloat(formData.price);
     const isBlend = formData.category === BeanCategory.BLEND;
 
@@ -202,7 +205,10 @@ const BeanManager: React.FC<BeanManagerProps> = ({ beans, onAddBean, onUpdateBea
   const totalRatio = blendParts.reduce((sum, p) => sum + (p.ratio || 0), 0);
 
   // Reusable Form Component Render Function
-  const renderForm = () => (
+  const renderForm = () => {
+    const isClubOwner = formData.owner === BeanOwner.CLUB;
+    
+    return (
     <div className="bg-white p-4 md:p-6 rounded-2xl shadow-xl border border-slate-100 animate-in fade-in slide-in-from-top-4 mb-6">
       <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="col-span-1 md:col-span-2 flex justify-between items-center mb-2">
@@ -329,20 +335,20 @@ const BeanManager: React.FC<BeanManagerProps> = ({ beans, onAddBean, onUpdateBea
                 {blendParts.length > 0 && (
                     <ul className="mb-3 space-y-2">
                         {blendParts.map((part, idx) => (
-                            <li key={idx} className="flex justify-between items-center text-sm bg-white p-2 rounded-lg border border-slate-200 shadow-sm">
+                            <li key={idx} className="flex justify-between items-center text-sm bg-white p-2.5 rounded-lg border border-slate-200 shadow-sm">
                                 <div className="flex flex-col">
-                                    <span className="font-medium text-slate-700">
+                                    <span className="font-bold text-slate-700">
                                         {part.origin}
                                         {part.variety && <span className="font-normal text-slate-500"> · {part.variety}</span>}
                                     </span>
-                                    <span className="text-[10px] text-slate-400">{part.process}, {part.roastLevel}</span>
+                                    <span className="text-xs text-slate-400 mt-0.5">{part.process} · {part.roastLevel}</span>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <span className="text-slate-500 bg-slate-100 px-1 rounded">
+                                <div className="flex items-center gap-3">
+                                    <span className="text-amber-700 bg-amber-50 px-2 py-0.5 rounded font-mono font-medium">
                                       {part.ratio !== undefined ? `${part.ratio}%` : '未知比例'}
                                     </span>
-                                    <button type="button" onClick={() => handleRemoveBlendPart(idx)} className="text-red-400 hover:text-red-600">
-                                        <X size={16}/>
+                                    <button type="button" onClick={() => handleRemoveBlendPart(idx)} className="text-slate-300 hover:text-red-500 transition-colors">
+                                        <X size={18}/>
                                     </button>
                                 </div>
                             </li>
@@ -351,69 +357,69 @@ const BeanManager: React.FC<BeanManagerProps> = ({ beans, onAddBean, onUpdateBea
                 )}
 
                 {totalRatio < 100 ? (
-                    <div className="grid grid-cols-2 md:grid-cols-5 gap-2 items-end">
-                        <div>
-                            <label className="block text-[10px] text-slate-500 mb-1 ml-1">产地</label>
-                            <input 
-                                placeholder="产地" 
-                                className="w-full p-2 border rounded-lg text-sm"
-                                value={newPart.origin} 
-                                onChange={e => setNewPart({...newPart, origin: e.target.value})}
-                            />
+                    <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm mt-3">
+                        <div className="text-xs font-bold text-slate-400 mb-2 uppercase tracking-wide">添加配方组成</div>
+                        <div className="grid grid-cols-2 gap-3 mb-3">
+                            <div>
+                                <input 
+                                    placeholder="产地 (必填)" 
+                                    className="w-full p-2.5 border rounded-lg text-sm focus:ring-1 focus:ring-amber-500 outline-none"
+                                    value={newPart.origin} 
+                                    onChange={e => setNewPart({...newPart, origin: e.target.value})}
+                                />
+                            </div>
+                             <div>
+                                <input 
+                                    placeholder="豆种" 
+                                    className="w-full p-2.5 border rounded-lg text-sm focus:ring-1 focus:ring-amber-500 outline-none"
+                                    value={newPart.variety} 
+                                    onChange={e => setNewPart({...newPart, variety: e.target.value})}
+                                />
+                            </div>
+                            <div>
+                                <input 
+                                    placeholder="处理法" 
+                                    className="w-full p-2.5 border rounded-lg text-sm focus:ring-1 focus:ring-amber-500 outline-none"
+                                    value={newPart.process} 
+                                    onChange={e => setNewPart({...newPart, process: e.target.value})}
+                                />
+                            </div>
+                            <div>
+                                 <CustomSelect
+                                    className="text-sm"
+                                    value={newPart.roastLevel} 
+                                    onChange={(val) => setNewPart({...newPart, roastLevel: val as RoastLevel})}
+                                    options={ROAST_LEVELS.map(l => ({ value: l, label: l }))}
+                                 />
+                            </div>
                         </div>
-                         <div>
-                            <label className="block text-[10px] text-slate-500 mb-1 ml-1">豆种</label>
-                            <input 
-                                placeholder="豆种" 
-                                className="w-full p-2 border rounded-lg text-sm"
-                                value={newPart.variety} 
-                                onChange={e => setNewPart({...newPart, variety: e.target.value})}
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-[10px] text-slate-500 mb-1 ml-1">处理法</label>
-                            <input 
-                                placeholder="处理" 
-                                className="w-full p-2 border rounded-lg text-sm"
-                                value={newPart.process} 
-                                onChange={e => setNewPart({...newPart, process: e.target.value})}
-                            />
-                        </div>
-                        <div>
-                             <label className="block text-[10px] text-slate-500 mb-1 ml-1">烘焙度</label>
-                             <CustomSelect
-                                className="text-sm"
-                                value={newPart.roastLevel} 
-                                onChange={(val) => setNewPart({...newPart, roastLevel: val as RoastLevel})}
-                                options={ROAST_LEVELS.map(l => ({ value: l, label: l }))}
-                             />
-                        </div>
-                         
-                         <div className="flex gap-2 col-span-2 md:col-span-1">
-                            <div className="w-full">
-                                <label className="block text-[10px] text-slate-500 mb-1 ml-1">比例%</label>
+                        <div className="flex gap-3 items-center">
+                            <div className="flex-1 relative">
                                 <input 
                                     type="number" 
                                     step="0.1"
-                                    placeholder="%" 
-                                    className="p-2 border rounded-lg text-sm w-full"
+                                    placeholder="比例" 
+                                    className="w-full p-2.5 border rounded-lg text-sm focus:ring-1 focus:ring-amber-500 outline-none font-mono"
                                     value={newPart.ratio} 
                                     onChange={e => setNewPart({...newPart, ratio: e.target.value})}
                                     onWheel={(e) => e.currentTarget.blur()}
                                 />
+                                <span className="absolute right-3 top-2.5 text-xs text-slate-400">%</span>
                             </div>
                             <button 
                                 type="button" 
                                 onClick={handleAddBlendPart}
-                                className="bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg px-2 h-[38px]"
+                                disabled={!newPart.origin}
+                                className="bg-amber-600 hover:bg-amber-700 disabled:bg-slate-200 disabled:text-slate-400 text-white rounded-lg px-6 py-2.5 text-sm font-bold shadow-sm transition-all flex items-center gap-2"
                             >
-                                <Plus size={18} />
+                                <Plus size={16} strokeWidth={3} />
+                                添加
                             </button>
-                         </div>
+                        </div>
                     </div>
                 ) : (
-                     <div className="flex items-center justify-center gap-2 p-2 bg-emerald-50 text-emerald-700 text-sm rounded-lg border border-emerald-100">
-                        <CheckCircle2 size={16}/> 配方比例已完整 (100%)
+                     <div className="flex items-center justify-center gap-2 p-3 bg-emerald-50 text-emerald-700 text-sm rounded-lg border border-emerald-100 font-medium">
+                        <CheckCircle2 size={18}/> 配方比例已完整 (100%)
                     </div>
                 )}
             </div>
@@ -432,7 +438,8 @@ const BeanManager: React.FC<BeanManagerProps> = ({ beans, onAddBean, onUpdateBea
                 setFormData((prev: any) => ({ 
                   ...prev, 
                   weight: val,
-                  remainingWeight: !prev.id ? val : prev.remainingWeight 
+                  // Only update remaining if it's personal owner. Club logic handled elsewhere or kept simpler.
+                  remainingWeight: (!prev.id && prev.owner === BeanOwner.PERSONAL) ? val : prev.remainingWeight 
                 }));
               }}
               onWheel={(e) => e.currentTarget.blur()}
@@ -443,8 +450,10 @@ const BeanManager: React.FC<BeanManagerProps> = ({ beans, onAddBean, onUpdateBea
              <input
               type="number"
               step="0.1"
-              className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none"
-              value={formData.remainingWeight}
+              className={`w-full p-3 border rounded-xl outline-none transition-colors ${isClubOwner ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'focus:ring-2 focus:ring-amber-500'}`}
+              value={isClubOwner ? '' : formData.remainingWeight}
+              placeholder={isClubOwner ? '-' : ''}
+              disabled={isClubOwner}
               onChange={e => setFormData({ ...formData, remainingWeight: e.target.value })}
               onWheel={(e) => e.currentTarget.blur()}
             />
@@ -537,7 +546,8 @@ const BeanManager: React.FC<BeanManagerProps> = ({ beans, onAddBean, onUpdateBea
         </div>
       </form>
     </div>
-  );
+    );
+  };
 
   return (
     <div className="space-y-4 md:space-y-6 pb-20 md:pb-0">
@@ -613,12 +623,12 @@ const BeanManager: React.FC<BeanManagerProps> = ({ beans, onAddBean, onUpdateBea
              const percentage = bean.weight > 0 ? (bean.remainingWeight / bean.weight) * 100 : 0;
              const isLow = percentage < 20;
              const isBlend = bean.category === BeanCategory.BLEND;
-             const isFinished = !bean.isActive || bean.remainingWeight <= 0;
+             const isFinished = !bean.isActive;
              const restingDays = calculateRestingDays(bean.roastDate);
              
              // Owner Logic
              const isClub = bean.owner === BeanOwner.CLUB;
-             const unitPrice = (bean.price && bean.weight) ? (bean.price / bean.weight).toFixed(2) : null;
+             const unitPrice = (bean.price && bean.weight) ? (bean.price / bean.weight).toFixed(3) : null;
            
              return (
               <div key={bean.id} className={`bg-white rounded-xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow overflow-hidden group flex flex-col h-full active:scale-[0.99] transition-transform duration-100 ${isFinished ? 'opacity-70 grayscale-[0.5]' : ''}`}>
@@ -658,13 +668,7 @@ const BeanManager: React.FC<BeanManagerProps> = ({ beans, onAddBean, onUpdateBea
                         </div>
                     </div>
                   )}
-
-                  {isClub && (
-                      <div className="mt-2 mb-4 p-2 bg-indigo-50/50 rounded-lg border border-indigo-100 text-xs text-indigo-600 flex items-center gap-2">
-                          <Users size={14} className="shrink-0"/>
-                          <span>社团公用豆，实时库存已隐藏</span>
-                      </div>
-                  )}
+                  {/* Banner Removed */}
 
                   <div className="space-y-1.5 text-sm text-slate-600 mt-auto">
                      
