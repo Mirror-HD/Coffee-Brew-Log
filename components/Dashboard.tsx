@@ -12,6 +12,7 @@ interface DashboardProps {
 const Dashboard: React.FC<DashboardProps> = ({ logs, beans }) => {
   const totalBrews = logs.length;
   const activeBeans = beans.filter(b => b.isActive && b.remainingWeight > 0).length;
+  const totalBeans = beans.length;
   
   const lastLog = logs.length > 0 ? logs[logs.length - 1] : null;
   const lastBean = lastLog ? beans.find(b => b.id === lastLog.beanId) : null;
@@ -56,8 +57,11 @@ const Dashboard: React.FC<DashboardProps> = ({ logs, beans }) => {
             <CoffeeBeanIcon size={20} />
           </div>
           <div>
-            <p className="text-xs text-slate-500 font-medium">咖啡豆</p>
-            <p className="text-xl font-bold text-slate-800 leading-none mt-1">{activeBeans}</p>
+            <p className="text-xs text-slate-500 font-medium">咖啡豆 (在喝/累计)</p>
+            <div className="flex items-baseline gap-1 mt-1">
+                <p className="text-xl font-bold text-slate-800 leading-none">{activeBeans}</p>
+                <span className="text-xs text-slate-400 font-semibold">/ {totalBeans}</span>
+            </div>
           </div>
         </div>
       </div>

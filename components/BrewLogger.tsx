@@ -19,16 +19,67 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
   const [expandedLogId, setExpandedLogId] = useState<string | null>(null);
   const [logToDelete, setLogToDelete] = useState<string | null>(null);
 
-  // Form State - Using 'any' to allow strings for numeric fields during editing (fixes decimal input bugs)
+  // Helper to get last used settings for a specific method
+  const getLastSettings = (method: BrewMethod) => {
+      // Search from newest to oldest
+      const lastLog = [...logs].reverse().find(l => l.method === method);
+      return {
+          grinderId: lastLog?.grinderId || '',
+          brewerId: lastLog?.brewerId || '',
+          grinderSetting: lastLog?.grinderSetting || ''
+      };
+  };
+
+  // Helper to get defaults based on method
+  const getDefaultsForMethod = (method: BrewMethod) => {
+      const lastSettings = getLastSettings(method);
+      
+      if (method === BrewMethod.ESPRESSO) {
+          return {
+              doseIn: '18',
+              yieldOut: '', // Blank for Espresso
+              timeSeconds: '', // Blank
+              temperature: '', // Blank and optional
+              grinderId: lastSettings.grinderId,
+              brewerId: '', // No brewer for Espresso usually
+              grinderSetting: lastSettings.grinderSetting,
+          };
+      } 
+      
+      if (method === BrewMethod.V60) {
+           return {
+              doseIn: '15',
+              yieldOut: '225',
+              timeSeconds: '', // Blank
+              temperature: '', // Blank
+              grinderId: lastSettings.grinderId,
+              brewerId: lastSettings.brewerId,
+              grinderSetting: lastSettings.grinderSetting,
+          };
+      }
+
+      // Fallback for other methods (Reuse V60 logic or generic)
+      return {
+          doseIn: '15',
+          yieldOut: '225',
+          timeSeconds: '',
+          temperature: '',
+          grinderId: lastSettings.grinderId,
+          brewerId: lastSettings.brewerId,
+          grinderSetting: lastSettings.grinderSetting,
+      };
+  };
+
+  // Form State - Using 'any' to allow strings for numeric fields during editing
   const [formData, setFormData] = useState<any>({
     method: BrewMethod.V60,
     doseIn: '15',
     yieldOut: '225',
-    timeSeconds: '150',
-    temperature: '92',
+    timeSeconds: '',
+    temperature: '',
     grinderId: '',
     brewerId: '',
-    grinderSetting: '3.0',
+    grinderSetting: '',
     rating: '',
     notes: '',
   });
@@ -37,19 +88,17 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
   const brewers = equipment.filter(e => e.type === EquipmentType.BREWER || e.type === EquipmentType.OTHER);
 
   const resetForm = () => {
+    // Default to V60 when opening fresh
+    const defaultMethod = BrewMethod.V60;
+    const defaults = getDefaultsForMethod(defaultMethod);
+
     setFormData({
       id: undefined,
-      method: BrewMethod.V60,
-      doseIn: '15',
-      yieldOut: '225',
-      timeSeconds: '150',
-      temperature: '92',
-      grinderId: '',
-      brewerId: '',
-      grinderSetting: '3.0',
+      beanId: undefined,
+      method: defaultMethod,
+      ...defaults,
       rating: '',
-      notes: '',
-      beanId: undefined, 
+      notes: '', 
     });
     setIsFormOpen(false);
   };
@@ -85,7 +134,9 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
     const dose = parseFloat(formData.doseIn) || 0;
     const yieldVal = parseFloat(formData.yieldOut) || 0;
     const timeVal = parseFloat(formData.timeSeconds) || 0;
-    const tempVal = parseFloat(formData.temperature) || 0;
+    // For Espresso, if temp is empty, it saves as 0. 
+    // This is consistent with current behavior where 0 implies not recorded/cold if we don't have nullable types.
+    const tempVal = parseFloat(formData.temperature) || 0; 
     const ratingVal = formData.rating ? parseFloat(formData.rating) : undefined;
     
     // Only deduct inventory for NEW logs to avoid double deduction on edit
@@ -207,7 +258,15 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
                     <label className="block text-xs font-medium text-slate-500 mb-1">冲煮方式</label>
                     <CustomSelect
                         value={formData.method}
-                        onChange={(val) => setFormData({ ...formData, method: val as BrewMethod })}
+                        onChange={(val) => {
+                            const newMethod = val as BrewMethod;
+                            const defaults = getDefaultsForMethod(newMethod);
+                            setFormData((prev: any) => ({
+                                ...prev,
+                                method: newMethod,
+                                ...defaults
+                            }));
+                        }}
                         options={BREW_METHODS.map(m => ({ value: m, label: m }))}
                     />
                 </div>
@@ -254,6 +313,7 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
                             onChange={e => setFormData({ ...formData, temperature: e.target.value })}
                             className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none"
                             onWheel={(e) => e.currentTarget.blur()}
+                            placeholder={isEspresso(formData.method) ? '可不填' : ''}
                         />
                      </div>
                 </div>
@@ -266,14 +326,18 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
                         options={[{value: '', label: '未指定'}, ...grinders.map(g => ({ value: g.id, label: g.name }))]}
                     />
                 </div>
-                 <div>
-                    <label className="block text-xs font-medium text-slate-500 mb-1">滤杯/器具</label>
-                     <CustomSelect
-                        value={formData.brewerId}
-                        onChange={(val) => setFormData({ ...formData, brewerId: val })}
-                        options={[{value: '', label: '未指定'}, ...brewers.map(b => ({ value: b.id, label: b.name }))]}
-                    />
-                </div>
+                 
+                 {/* Hide Brewer selection for Espresso */}
+                 {!isEspresso(formData.method) && (
+                    <div>
+                        <label className="block text-xs font-medium text-slate-500 mb-1">滤杯/器具</label>
+                        <CustomSelect
+                            value={formData.brewerId}
+                            onChange={(val) => setFormData({ ...formData, brewerId: val })}
+                            options={[{value: '', label: '未指定'}, ...brewers.map(b => ({ value: b.id, label: b.name }))]}
+                        />
+                    </div>
+                 )}
 
                 <div>
                     <label className="block text-xs font-medium text-slate-500 mb-1">研磨刻度</label>
@@ -351,7 +415,7 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
                                 <div className="flex flex-wrap gap-2 text-xs text-slate-600 items-center">
                                     <span className="px-2 py-0.5 bg-slate-100 rounded-md">{log.method}</span>
                                     <span className="flex items-center gap-1"><Droplet size={12}/> {log.doseIn}g / {log.yieldOut}g</span>
-                                    <span className="flex items-center gap-1"><Clock size={12}/> {formatTime(log.timeSeconds)}</span>
+                                    {log.timeSeconds > 0 && <span className="flex items-center gap-1"><Clock size={12}/> {formatTime(log.timeSeconds)}</span>}
                                     {log.rating && <span className="text-amber-600 font-bold">★ {log.rating}</span>}
                                 </div>
                             </div>
@@ -370,14 +434,18 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
                                         <span className="text-slate-400 mx-1">@</span>
                                         <span className="font-medium">{log.grinderSetting || '-'}</span>
                                     </div>
-                                    <div>
-                                        <span className="block text-xs text-slate-400 mb-1">滤杯</span>
-                                        <span className="font-medium">{getEquipmentName(log.brewerId) || '未指定'}</span>
-                                    </div>
-                                    <div>
-                                        <span className="block text-xs text-slate-400 mb-1">水温</span>
-                                        <span className="flex items-center gap-1"><Thermometer size={14}/> {log.temperature}°C</span>
-                                    </div>
+                                    {!isEspresso(log.method) && (
+                                        <div>
+                                            <span className="block text-xs text-slate-400 mb-1">滤杯</span>
+                                            <span className="font-medium">{getEquipmentName(log.brewerId) || '未指定'}</span>
+                                        </div>
+                                    )}
+                                    {log.temperature > 0 && (
+                                        <div>
+                                            <span className="block text-xs text-slate-400 mb-1">水温</span>
+                                            <span className="flex items-center gap-1"><Thermometer size={14}/> {log.temperature}°C</span>
+                                        </div>
+                                    )}
                                     <div>
                                          <span className="block text-xs text-slate-400 mb-1">粉液比</span>
                                          <span className="font-medium">1 : {(log.yieldOut / log.doseIn).toFixed(1)}</span>
