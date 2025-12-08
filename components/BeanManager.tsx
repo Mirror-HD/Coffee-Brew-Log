@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Bean, RoastLevel, BeanCategory, BlendPart, BeanOwner } from '../types';
 import { ROAST_LEVELS, BEAN_CATEGORIES, BEAN_OWNERS } from '../constants';
-import { Plus, Trash2, Scale, Calendar, Layers, X, Search, Pencil, CheckCircle2, AlertTriangle, User, Users, Coins, ArrowDown } from 'lucide-react';
+import { Plus, Trash2, Scale, Calendar, Layers, X, Search, Pencil, CheckCircle2, AlertTriangle, User, Users, Coins, ChevronDown } from 'lucide-react';
 import { CoffeeBeanIcon } from './CustomIcons';
 import CustomSelect from './CustomSelect';
 
@@ -15,6 +15,9 @@ interface BeanManagerProps {
 const BeanManager: React.FC<BeanManagerProps> = ({ beans, onAddBean, onUpdateBean, onDeleteBean }) => {
   // editingId: 'NEW' for adding, UUID for editing specific bean, null for none
   const [editingId, setEditingId] = useState<string | null>(null);
+  // State for tracking which bean card is expanded
+  const [expandedBeanId, setExpandedBeanId] = useState<string | null>(null);
+  
   const [isRoastDateUnknown, setIsRoastDateUnknown] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   
@@ -629,31 +632,50 @@ const BeanManager: React.FC<BeanManagerProps> = ({ beans, onAddBean, onUpdateBea
              // Owner Logic
              const isClub = bean.owner === BeanOwner.CLUB;
              const unitPrice = (bean.price && bean.weight) ? (bean.price / bean.weight).toFixed(3) : null;
-           
+             
+             // Check if this card is expanded
+             const isExpanded = expandedBeanId === bean.id;
+
              return (
-              <div key={bean.id} className={`bg-white rounded-xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow overflow-hidden group flex flex-col h-full active:scale-[0.99] transition-transform duration-100 ${isFinished ? 'opacity-70 grayscale-[0.5]' : ''}`}>
+              <div 
+                key={bean.id} 
+                onClick={() => setExpandedBeanId(isExpanded ? null : bean.id)}
+                className={`bg-white rounded-xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow overflow-hidden group flex flex-col active:scale-[0.99] transition-transform duration-100 cursor-pointer ${isFinished ? 'opacity-70 grayscale-[0.5]' : ''}`}
+              >
                 <div className={`h-1.5 ${isFinished ? 'bg-slate-300' : isClub ? 'bg-indigo-500' : 'bg-amber-600'}`}></div>
                 <div className="p-4 md:p-5 flex-1 flex flex-col">
+                  {/* Summary Header */}
                   <div className="flex justify-between items-start mb-2 gap-2">
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <h3 className="font-bold text-lg text-slate-800 leading-tight truncate">{bean.name}</h3>
                       <p className="text-amber-700 text-sm font-medium mt-1 truncate">{bean.roaster}</p>
                     </div>
-                    <div className="flex flex-col gap-1 items-end shrink-0">
-                        <span className={`text-[10px] px-2 py-0.5 rounded-full border ${isBlend ? 'bg-amber-50 border-amber-200 text-amber-800' : 'bg-slate-50 border-slate-200 text-slate-600'}`}>
-                        {bean.category}
-                        </span>
-                        {isClub && (
-                            <span className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full border bg-indigo-50 border-indigo-200 text-indigo-700 font-medium">
-                                <Users size={10} /> 社团
+                    
+                    <div className="flex flex-col items-end gap-1 shrink-0">
+                         <div className="flex items-center gap-1">
+                            {restingDays !== null && (
+                                <span className={`text-[10px] px-2 py-0.5 rounded-full border ${getRestingStatusColor(restingDays)}`}>
+                                    养{restingDays}天
+                                </span>
+                            )}
+                            <span className={`text-[10px] px-2 py-0.5 rounded-full border ${isBlend ? 'bg-amber-50 border-amber-200 text-amber-800' : 'bg-slate-50 border-slate-200 text-slate-600'}`}>
+                                {bean.category}
                             </span>
-                        )}
+                            {isClub && (
+                                <span className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full border bg-indigo-50 border-indigo-200 text-indigo-700 font-medium">
+                                    <Users size={10} /> 社团
+                                </span>
+                            )}
+                         </div>
+                         <div className={`transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''} text-slate-400 mt-1`}>
+                             <ChevronDown size={20} />
+                         </div>
                     </div>
                   </div>
                   
                   {/* Inventory Bar - Hidden for Club Beans */}
                   {!isClub && (
-                    <div className="mt-3 mb-4">
+                    <div className="mt-2 mb-2">
                         <div className="flex justify-between text-xs mb-1">
                             <span className="text-slate-500 text-xs">库存</span>
                             <span className={`font-medium ${isLow ? 'text-red-500' : 'text-slate-700'}`}>
@@ -669,93 +691,92 @@ const BeanManager: React.FC<BeanManagerProps> = ({ beans, onAddBean, onUpdateBea
                     </div>
                   )}
 
-                  <div className="space-y-1.5 text-sm text-slate-600 mt-auto">
-                     
-                    {!isBlend ? (
-                       <>
-                        <div className="flex justify-between border-b border-slate-50 pb-1">
-                          <span className="text-slate-400 text-xs">烘焙度</span>
-                          <span className="font-medium text-xs">{bean.roastLevel}</span>
-                        </div>
-                        <div className="flex justify-between border-b border-slate-50 pb-1">
-                              <span className="text-slate-400 text-xs">产地</span>
-                              <span className="font-medium truncate max-w-[120px] text-xs" title={bean.origin}>{bean.origin}</span>
-                          </div>
-                           {bean.variety && (
-                              <div className="flex justify-between pb-1">
-                                  <span className="text-slate-400 text-xs">豆种</span>
-                                  <span className="font-medium text-xs">{bean.variety}</span>
-                              </div>
-                          )}
-                       </>
-                    ) : (
-                        bean.blendParts && bean.blendParts.length > 0 && (
-                            <div className="pt-1">
-                                <span className="text-xs text-slate-400 block mb-1">拼配详情:</span>
-                                <ul className="text-xs space-y-1 bg-slate-50/50 rounded-lg p-2 border border-slate-100">
-                                    {bean.blendParts.map((part, idx) => (
-                                        <li key={idx} className="flex justify-between items-start border-b border-slate-100 last:border-0 pb-1 last:pb-0 mb-1 last:mb-0">
-                                            <div className="flex flex-col min-w-0 pr-2">
-                                              <span className="text-slate-700 font-medium truncate">
-                                                  {part.origin}
-                                                  {part.variety && <span className="font-normal text-slate-500"> · {part.variety}</span>}
-                                              </span>
-                                              <span className="text-[10px] text-slate-500 truncate">{part.process} · {part.roastLevel}</span>
-                                            </div>
-                                            <span className="text-slate-600 font-mono text-[10px] bg-white px-1.5 py-0.5 rounded border border-slate-100 whitespace-nowrap">
-                                              {part.ratio !== undefined ? `${part.ratio}%` : '?%'}
-                                            </span>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                        )
-                    )}
+                  {/* Expanded Details */}
+                  {isExpanded && (
+                    <div className="mt-4 pt-4 border-t border-slate-50 space-y-3 animate-in fade-in slide-in-from-top-1">
+                        <div className="space-y-2 text-sm text-slate-600">
+                            {!isBlend ? (
+                            <>
+                                <div className="flex justify-between border-b border-slate-50 pb-2">
+                                    <span className="text-slate-400 text-xs">烘焙度</span>
+                                    <span className="font-medium text-xs">{bean.roastLevel}</span>
+                                </div>
+                                <div className="flex justify-between border-b border-slate-50 pb-2">
+                                    <span className="text-slate-400 text-xs">产地</span>
+                                    <span className="font-medium text-xs text-right max-w-[150px]">{bean.origin}</span>
+                                </div>
+                                {bean.variety && (
+                                    <div className="flex justify-between border-b border-slate-50 pb-2">
+                                        <span className="text-slate-400 text-xs">豆种</span>
+                                        <span className="font-medium text-xs text-right max-w-[150px]">{bean.variety}</span>
+                                    </div>
+                                )}
+                            </>
+                            ) : (
+                                bean.blendParts && bean.blendParts.length > 0 && (
+                                    <div>
+                                        <span className="text-xs text-slate-400 block mb-2">拼配详情:</span>
+                                        <ul className="text-xs space-y-2 bg-slate-50/50 rounded-lg p-3 border border-slate-100">
+                                            {bean.blendParts.map((part, idx) => (
+                                                <li key={idx} className="flex justify-between items-start border-b border-slate-100 last:border-0 pb-2 last:pb-0 mb-1 last:mb-0">
+                                                    <div className="flex flex-col min-w-0 pr-2">
+                                                        <span className="text-slate-700 font-medium truncate">
+                                                            {part.origin}
+                                                        </span>
+                                                        {part.variety && <span className="text-xs text-slate-500 truncate mt-0.5">{part.variety}</span>}
+                                                        <span className="text-[10px] text-slate-400 truncate mt-0.5">{part.process} · {part.roastLevel}</span>
+                                                    </div>
+                                                    <span className="text-slate-600 font-mono text-[10px] bg-white px-1.5 py-0.5 rounded border border-slate-100 whitespace-nowrap mt-1">
+                                                        {part.ratio !== undefined ? `${part.ratio}%` : '?%'}
+                                                    </span>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )
+                            )}
 
-                    {/* Price Info Row */}
-                    {(bean.price || unitPrice) && (
-                        <div className="flex justify-between items-center border-t border-slate-50 pt-1 pb-1">
-                            <span className="text-slate-400 text-xs">价格</span>
-                            <div className="flex items-center gap-2">
-                                {bean.price && <span className="text-slate-600 font-medium text-xs">¥{bean.price}</span>}
-                                {unitPrice && <span className="bg-amber-50 text-amber-700 px-1.5 py-0.5 rounded text-[10px] font-bold">¥{unitPrice}/g</span>}
+                            {/* Price Info Row */}
+                            {(bean.price || unitPrice) && (
+                                <div className="flex justify-between items-center border-t border-slate-50 pt-2 pb-1">
+                                    <span className="text-slate-400 text-xs">价格</span>
+                                    <div className="flex items-center gap-2">
+                                        {bean.price && <span className="text-slate-600 font-medium text-xs">¥{bean.price}</span>}
+                                        {unitPrice && <span className="bg-amber-50 text-amber-700 px-1.5 py-0.5 rounded text-[10px] font-bold">¥{unitPrice}/g</span>}
+                                    </div>
+                                </div>
+                            )}
+                            
+                            <div className="flex justify-between pt-2 border-t border-slate-50 pb-1 text-xs text-slate-400">
+                                <span className="flex items-center gap-1"><Calendar size={12}/> 烘焙日期</span>
+                                <div className="flex items-center gap-1.5">
+                                    <span>{bean.roastDate ? bean.roastDate.replace(/-/g, '/') : '未知'}</span>
+                                </div>
                             </div>
                         </div>
-                    )}
-                    
-                     <div className="flex justify-between pt-1 border-t border-slate-50 pb-1 text-xs text-slate-400">
-                          <span className="flex items-center gap-1"><Calendar size={12}/> 烘焙日期</span>
-                          <div className="flex items-center gap-1.5">
-                              {restingDays !== null && (
-                                  <span className={`px-1.5 py-0.5 rounded border text-[10px] font-medium ${getRestingStatusColor(restingDays)}`}>
-                                      已养 {restingDays} 天
-                                  </span>
-                              )}
-                              <span>{bean.roastDate ? bean.roastDate.replace(/-/g, '/') : '未知'}</span>
-                          </div>
-                     </div>
-                  </div>
 
-                  {bean.tastingNotes && (
-                    <div className="mt-3 pt-2 border-t border-slate-100">
-                      <p className="text-sm text-slate-700 italic truncate">{bean.tastingNotes}</p>
+                        {bean.tastingNotes && (
+                            <div className="pt-2 border-t border-slate-100">
+                                <p className="text-sm text-slate-700 italic">{bean.tastingNotes}</p>
+                            </div>
+                        )}
+                        
+                        <div className="flex justify-end gap-3 pt-2">
+                            <button
+                            onClick={(e) => { e.stopPropagation(); startEditing(bean); }}
+                            className="flex items-center gap-1 text-slate-400 hover:text-amber-600 transition-colors py-1.5 px-3 hover:bg-slate-50 rounded-lg text-xs font-medium"
+                            >
+                            <Pencil size={14} /> 编辑
+                            </button>
+                            <button
+                            onClick={(e) => { e.stopPropagation(); setBeanToDelete({id: bean.id, name: bean.name}); }}
+                            className="flex items-center gap-1 text-slate-400 hover:text-red-500 transition-colors py-1.5 px-3 hover:bg-slate-50 rounded-lg text-xs font-medium"
+                            >
+                            <Trash2 size={14} /> 删除
+                            </button>
+                        </div>
                     </div>
                   )}
-                  
-                  <div className="mt-4 flex justify-end gap-3 pt-2">
-                    <button
-                      onClick={(e) => { e.stopPropagation(); startEditing(bean); }}
-                      className="flex items-center gap-1 text-slate-400 hover:text-amber-600 transition-colors py-1 px-2 hover:bg-slate-50 rounded-lg text-xs"
-                    >
-                      <Pencil size={14} /> 编辑
-                    </button>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setBeanToDelete({id: bean.id, name: bean.name}); }}
-                      className="flex items-center gap-1 text-slate-400 hover:text-red-500 transition-colors py-1 px-2 hover:bg-slate-50 rounded-lg text-xs"
-                    >
-                      <Trash2 size={14} /> 删除
-                    </button>
-                  </div>
                 </div>
               </div>
              );
