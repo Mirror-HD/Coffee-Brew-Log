@@ -62,8 +62,8 @@ const Layout: React.FC<LayoutProps> = ({ activeTab, setActiveTab, children }) =>
         </div>
       </nav>
 
-      {/* Main Content Area - Increased top padding for mobile (pt-28) to account for taller header */}
-      <main className="flex-1 overflow-y-auto overflow-x-hidden md:p-8 pt-28 pb-24 md:pb-8 px-4 w-full scroll-smooth">
+      {/* Main Content Area - Reduced bottom padding to pb-20 */}
+      <main className="flex-1 overflow-y-auto overflow-x-hidden md:p-8 pt-28 pb-20 md:pb-8 px-4 w-full scroll-smooth">
         <div className="max-w-5xl mx-auto animate-in fade-in duration-300">
            {children}
         </div>

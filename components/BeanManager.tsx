@@ -550,7 +550,7 @@ const BeanManager: React.FC<BeanManagerProps> = ({ beans, onAddBean, onUpdateBea
   };
 
   return (
-    <div className="space-y-4 md:space-y-6 pb-20 md:pb-0">
+    <div className="space-y-4 md:space-y-6">
       
       {/* Custom Delete Modal */}
       {beanToDelete && (
@@ -655,7 +655,7 @@ const BeanManager: React.FC<BeanManagerProps> = ({ beans, onAddBean, onUpdateBea
                   {!isClub && (
                     <div className="mt-3 mb-4">
                         <div className="flex justify-between text-xs mb-1">
-                            <span className="text-slate-500 flex items-center gap-1"><Scale size={12}/> 库存</span>
+                            <span className="text-slate-500 text-xs">库存</span>
                             <span className={`font-medium ${isLow ? 'text-red-500' : 'text-slate-700'}`}>
                                 {Number(bean.remainingWeight).toFixed(1).replace(/\.0$/, '')}g / {Number(bean.weight).toFixed(1).replace(/\.0$/, '')}g
                             </span>
@@ -668,7 +668,6 @@ const BeanManager: React.FC<BeanManagerProps> = ({ beans, onAddBean, onUpdateBea
                         </div>
                     </div>
                   )}
-                  {/* Banner Removed */}
 
                   <div className="space-y-1.5 text-sm text-slate-600 mt-auto">
                      
@@ -716,10 +715,7 @@ const BeanManager: React.FC<BeanManagerProps> = ({ beans, onAddBean, onUpdateBea
                     {/* Price Info Row */}
                     {(bean.price || unitPrice) && (
                         <div className="flex justify-between items-center border-t border-slate-50 pt-1 pb-1">
-                            <div className="flex items-center gap-1 text-slate-400 text-xs">
-                                <Coins size={12} />
-                                <span>价格</span>
-                            </div>
+                            <span className="text-slate-400 text-xs">价格</span>
                             <div className="flex items-center gap-2">
                                 {bean.price && <span className="text-slate-600 font-medium text-xs">¥{bean.price}</span>}
                                 {unitPrice && <span className="bg-amber-50 text-amber-700 px-1.5 py-0.5 rounded text-[10px] font-bold">¥{unitPrice}/g</span>}
