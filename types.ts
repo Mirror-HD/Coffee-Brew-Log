@@ -19,11 +19,11 @@ export enum RoastLevel {
 export enum BrewMethod {
   V60 = '手冲 (V60)',
   ESPRESSO = '意式浓缩',
+  COLD_BREW = '冷萃',
   AEROPRESS = '爱乐压',
   FRENCH_PRESS = '法压壶',
   MOKA_POT = '摩卡壶',
   CHEMEX = 'Chemex',
-  COLD_BREW = '冷萃',
   OTHER = '其他'
 }
 
@@ -87,6 +87,7 @@ export interface BrewLog {
   
   grinderSetting: string;
   doseIn: number; // grams
+  purgeWeight?: number; // grams used to purge grinder
   yieldOut: number; // grams
   timeSeconds: number;
   temperature: number; // Celsius

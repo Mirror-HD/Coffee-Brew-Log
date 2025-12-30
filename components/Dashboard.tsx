@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bean, BrewLog, BrewMethod } from '../types';
+import { Bean, BrewLog, BrewMethod, BeanOwner } from '../types';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { Coffee, Clock, Calendar } from 'lucide-react';
 import { CoffeeBeanIcon } from './CustomIcons';
@@ -11,7 +11,8 @@ interface DashboardProps {
 
 const Dashboard: React.FC<DashboardProps> = ({ logs, beans }) => {
   const totalBrews = logs.length;
-  const activeBeans = beans.filter(b => b.isActive && b.remainingWeight > 0).length;
+  // Active beans: Must be marked active AND (have weight remaining OR be a club bean which has unlimited/0 weight)
+  const activeBeans = beans.filter(b => b.isActive && (b.remainingWeight > 0 || b.owner === BeanOwner.CLUB)).length;
   const totalBeans = beans.length;
   
   const lastLog = logs.length > 0 ? logs[logs.length - 1] : null;
@@ -24,7 +25,18 @@ const Dashboard: React.FC<DashboardProps> = ({ logs, beans }) => {
 
   const COLORS = ['#d97706', '#b45309', '#92400e', '#78350f', '#fbbf24', '#f59e0b'];
 
-  const formatTime = (seconds: number) => {
+  const formatTime = (seconds: number, method?: BrewMethod) => {
+    if (method === BrewMethod.COLD_BREW) {
+        if (seconds === 0) return '萃取中';
+        const totalHours = Math.floor(seconds / 3600);
+        if (totalHours >= 24) {
+            const days = Math.floor(totalHours / 24);
+            const hours = totalHours % 24;
+            return hours > 0 ? `${days}d ${hours}h` : `${days}d`;
+        }
+        return `${Math.max(1, totalHours)}h`;
+    }
+
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
@@ -93,11 +105,11 @@ const Dashboard: React.FC<DashboardProps> = ({ logs, beans }) => {
                     </div>
                     <div className="bg-slate-50 p-2 rounded-lg text-center border border-slate-100">
                         <div className="text-[10px] text-slate-400 mb-1">时间</div>
-                        <div className="font-bold text-slate-700 text-sm">{formatTime(lastLog.timeSeconds)}</div>
+                        <div className="font-bold text-slate-700 text-sm">{formatTime(lastLog.timeSeconds, lastLog.method)}</div>
                     </div>
                     <div className="bg-slate-50 p-2 rounded-lg text-center border border-slate-100">
                         <div className="text-[10px] text-slate-400 mb-1">水温</div>
-                        <div className="font-bold text-slate-700 text-sm">{lastLog.temperature}°</div>
+                        <div className="font-bold text-slate-700 text-sm">{lastLog.method === BrewMethod.COLD_BREW ? '-' : `${lastLog.temperature}°`}</div>
                     </div>
                  </div>
               </div>

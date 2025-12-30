@@ -203,6 +203,10 @@ const BeanManager: React.FC<BeanManagerProps> = ({ beans, onAddBean, onUpdateBea
       (bean.variety && bean.variety.toLowerCase().includes(query)) ||
       (bean.tastingNotes && bean.tastingNotes.toLowerCase().includes(query))
     );
+  }).sort((a, b) => {
+      // Sort active beans to the top
+      if (a.isActive === b.isActive) return 0;
+      return a.isActive ? -1 : 1;
   });
 
   const totalRatio = blendParts.reduce((sum, p) => sum + (p.ratio || 0), 0);
