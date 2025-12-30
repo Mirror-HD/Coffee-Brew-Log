@@ -22,9 +22,7 @@ export enum BrewMethod {
   COLD_BREW = '冷萃',
   AEROPRESS = '爱乐压',
   FRENCH_PRESS = '法压壶',
-  MOKA_POT = '摩卡壶',
-  CHEMEX = 'Chemex',
-  OTHER = '其他'
+  MOKA_POT = '摩卡壶'
 }
 
 export enum EquipmentType {

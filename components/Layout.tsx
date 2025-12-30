@@ -22,7 +22,7 @@ const Layout: React.FC<LayoutProps> = ({ activeTab, setActiveTab, children }) =>
     <div className="h-screen bg-slate-50 text-slate-900 flex flex-col md:flex-row overflow-hidden">
       
       {/* Mobile Top Header - Orange background, extra top padding for status bar */}
-      <header className="md:hidden fixed top-0 left-0 right-0 bg-amber-600 text-white shadow-md z-50 flex items-center px-6 pt-12 pb-4 transition-all">
+      <header className="md:hidden fixed top-0 left-0 right-0 bg-amber-600 text-white shadow-md z-[100] flex items-center px-6 pt-12 pb-4 transition-all">
         <div className="flex items-center gap-2 font-bold text-xl">
            <Coffee className="stroke-2 w-6 h-6" />
            <span>Coffee</span>
@@ -30,7 +30,7 @@ const Layout: React.FC<LayoutProps> = ({ activeTab, setActiveTab, children }) =>
       </header>
 
       {/* Sidebar (Desktop) */}
-      <nav className="hidden md:flex bg-white border-r border-slate-200 w-64 flex-col flex-shrink-0 z-50 shadow-none">
+      <nav className="hidden md:flex bg-white border-r border-slate-200 w-64 flex-col flex-shrink-0 z-[100] shadow-none">
         <div className="p-6">
           <div className="flex items-center gap-2 text-amber-700 font-bold text-xl tracking-tight">
             <Coffee className="stroke-2" />
@@ -70,7 +70,7 @@ const Layout: React.FC<LayoutProps> = ({ activeTab, setActiveTab, children }) =>
       </main>
 
       {/* Bottom Navigation Bar (Mobile) */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-lg border-t border-slate-200 z-50 pb-safe">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-lg border-t border-slate-200 z-[100] pb-safe">
         <div className="flex justify-around items-center h-16 px-2">
           {navItems.map((item) => {
             const Icon = item.icon;

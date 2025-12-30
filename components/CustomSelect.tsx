@@ -55,7 +55,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
       </button>
 
       {isOpen && (
-        <div className="absolute left-0 right-0 top-full mt-2 bg-white border border-slate-100 rounded-xl shadow-xl z-[100] max-h-60 overflow-y-auto overflow-x-hidden animate-in fade-in zoom-in-95 duration-200 p-1">
+        <div className="absolute left-0 right-0 top-full mt-2 bg-white border border-slate-100 rounded-xl shadow-xl z-40 max-h-60 overflow-y-auto overflow-x-hidden animate-in fade-in zoom-in-95 duration-200 p-1">
           {options.length > 0 ? (
             options.map((option) => (
               <button

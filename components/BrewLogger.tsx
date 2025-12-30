@@ -211,7 +211,7 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
   return (
     <div className="space-y-4 md:space-y-6">
       {logToDelete && (
-          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setLogToDelete(null)}>
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setLogToDelete(null)}>
               <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xs p-5 border border-slate-100 scale-100 animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
                   <div className="flex flex-col items-center text-center mb-5">
                       <div className="w-12 h-12 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-3">
