@@ -89,8 +89,21 @@ export interface BrewLog {
   yieldOut: number; // grams
   timeSeconds: number;
   temperature: number; // Celsius
-  rating?: number; // 1-10, Optional
   notes: string;
 }
 
-export type Tab = 'dashboard' | 'beans' | 'brews' | 'equipment' | 'settings';
+export interface Ingredient {
+  item: string;
+  amount: string;
+}
+
+export interface SpecialtyRecipe {
+  id: string;
+  name: string;
+  baseBeanId?: string;
+  ingredients: Ingredient[];
+  instructions: string;
+  date: number;
+}
+
+export type Tab = 'dashboard' | 'beans' | 'brews' | 'equipment' | 'settings' | 'specialty';

@@ -1,5 +1,5 @@
-import { Bean, BrewLog, Equipment } from '../types';
-import { APP_STORAGE_KEY_BEANS, APP_STORAGE_KEY_LOGS, APP_STORAGE_KEY_EQUIPMENT, MOCK_BEANS } from '../constants';
+import { Bean, BrewLog, Equipment, SpecialtyRecipe } from '../types';
+import { APP_STORAGE_KEY_BEANS, APP_STORAGE_KEY_LOGS, APP_STORAGE_KEY_EQUIPMENT, APP_STORAGE_KEY_SPECIALTY, MOCK_BEANS } from '../constants';
 
 export const getBeans = (): Bean[] => {
   const stored = localStorage.getItem(APP_STORAGE_KEY_BEANS);
@@ -41,4 +41,18 @@ export const getEquipment = (): Equipment[] => {
 
 export const saveEquipment = (equipment: Equipment[]) => {
   localStorage.setItem(APP_STORAGE_KEY_EQUIPMENT, JSON.stringify(equipment));
+};
+
+export const getSpecialtyRecipes = (): SpecialtyRecipe[] => {
+  const stored = localStorage.getItem(APP_STORAGE_KEY_SPECIALTY);
+  if (!stored) return [];
+  try {
+    return JSON.parse(stored);
+  } catch {
+    return [];
+  }
+};
+
+export const saveSpecialtyRecipes = (recipes: SpecialtyRecipe[]) => {
+  localStorage.setItem(APP_STORAGE_KEY_SPECIALTY, JSON.stringify(recipes));
 };

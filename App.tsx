@@ -5,37 +5,31 @@ import BeanManager from './components/BeanManager';
 import BrewLogger from './components/BrewLogger';
 import EquipmentManager from './components/EquipmentManager';
 import Settings from './components/Settings';
-import { Bean, BrewLog, Equipment, Tab } from './types';
-import { getBeans, saveBeans, getLogs, saveLogs, getEquipment, saveEquipment } from './services/storageService';
+import SpecialtyManager from './components/SpecialtyManager';
+import { Bean, BrewLog, Equipment, Tab, SpecialtyRecipe } from './types';
+import { getBeans, saveBeans, getLogs, saveLogs, getEquipment, saveEquipment, getSpecialtyRecipes, saveSpecialtyRecipes } from './services/storageService';
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
   const [beans, setBeans] = useState<Bean[]>([]);
   const [logs, setLogs] = useState<BrewLog[]>([]);
   const [equipment, setEquipment] = useState<Equipment[]>([]);
+  const [specialtyRecipes, setSpecialtyRecipes] = useState<SpecialtyRecipe[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load Data & Request Storage Persistence
+  // Load Data
   useEffect(() => {
-    // 1. Load Data
     setBeans(getBeans());
     setLogs(getLogs());
     setEquipment(getEquipment());
+    setSpecialtyRecipes(getSpecialtyRecipes());
     setIsLoading(false);
 
-    // 2. Request Persistent Storage (Best effort for Web Apps)
     if (navigator.storage && navigator.storage.persist) {
-      navigator.storage.persist().then(granted => {
-        if (granted) {
-          console.log("Storage will not be cleared except by explicit user action");
-        } else {
-          console.log("Storage may be cleared by the UA under storage pressure.");
-        }
-      });
+      navigator.storage.persist();
     }
   }, []);
 
-  // Persist Data Changes
   const handleAddBean = (newBean: Bean) => {
     const updated = [newBean, ...beans];
     setBeans(updated);
@@ -84,6 +78,24 @@ const App: React.FC = () => {
     saveEquipment(updated);
   };
 
+  const handleAddSpecialty = (recipe: SpecialtyRecipe) => {
+    const updated = [recipe, ...specialtyRecipes];
+    setSpecialtyRecipes(updated);
+    saveSpecialtyRecipes(updated);
+  };
+
+  const handleUpdateSpecialty = (recipe: SpecialtyRecipe) => {
+    const updated = specialtyRecipes.map(r => r.id === recipe.id ? recipe : r);
+    setSpecialtyRecipes(updated);
+    saveSpecialtyRecipes(updated);
+  };
+
+  const handleDeleteSpecialty = (id: string) => {
+    const updated = specialtyRecipes.filter(r => r.id !== id);
+    setSpecialtyRecipes(updated);
+    saveSpecialtyRecipes(updated);
+  };
+
   const handleDataImport = (newBeans: Bean[], newLogs: BrewLog[], newEquipment: Equipment[]) => {
       setBeans(newBeans);
       setLogs(newLogs);
@@ -118,6 +130,16 @@ const App: React.FC = () => {
           onUpdateLog={handleUpdateLog}
           onDeleteLog={handleDeleteLog}
           onUpdateBean={handleUpdateBean}
+        />
+      )}
+
+      {activeTab === 'specialty' && (
+        <SpecialtyManager 
+          beans={beans}
+          recipes={specialtyRecipes}
+          onAddRecipe={handleAddSpecialty}
+          onUpdateRecipe={handleUpdateSpecialty}
+          onDeleteRecipe={handleDeleteSpecialty}
         />
       )}
 

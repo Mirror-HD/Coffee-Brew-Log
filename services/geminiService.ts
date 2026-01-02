@@ -1,4 +1,3 @@
-
 import { GoogleGenAI } from "@google/genai";
 import { BrewLog, Bean, Equipment, BeanCategory, BrewMethod } from "../types";
 
@@ -57,7 +56,6 @@ export const analyzeBrew = async (log: BrewLog, bean: Bean, grinder?: Equipment,
     - 水温: ${log.temperature}°C
     
     我的感官反馈:
-    - 评分: ${log.rating}/5
     - 风味/口感描述: "${log.notes}"
     
     请根据我的描述和数据，提供一段简短的分析（最多3句话），解释为什么会呈现这种风味（例如：萃取过度、萃取不足、通道效应等）。

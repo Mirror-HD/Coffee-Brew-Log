@@ -48,3 +48,19 @@ export const ScaleIcon: React.FC<IconProps> = ({ size = 24, className = "" }) =>
     <path d="M4 8l2-4h12l2 4" opacity="0.5" />
   </svg>
 );
+
+export const SpecialtyIcon: React.FC<IconProps> = ({ size = 24, className = "" }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    {/* Coupe Glass Bowl - More rounded and elegant */}
+    <path d="M5 5c0 4 3 7 7 7s7-3 7-7" />
+    <path d="M4 5h16" opacity="0.3" />
+    {/* Stem and Base */}
+    <path d="M12 12v8" />
+    <path d="M9 20h6" />
+    {/* Refined Lemon Slice on the rim */}
+    <g transform="translate(17, 3)">
+      <circle cx="2" cy="2" r="2.5" strokeWidth="1.2" />
+      <path d="M2 0v4M0 2h4" strokeWidth="0.5" opacity="0.6" />
+    </g>
+  </svg>
+);

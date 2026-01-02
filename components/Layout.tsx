@@ -1,7 +1,7 @@
 import React from 'react';
 import { Tab } from '../types';
-import { LayoutDashboard, Coffee, Archive } from 'lucide-react';
-import { CoffeeBeanIcon, HandGrinderIcon } from './CustomIcons';
+import { LayoutDashboard, Coffee } from 'lucide-react';
+import { CoffeeBeanIcon, HandGrinderIcon, SpecialtyIcon } from './CustomIcons';
 
 interface LayoutProps {
   activeTab: Tab;
@@ -11,31 +11,43 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ activeTab, setActiveTab, children }) => {
   const navItems = [
-    { id: 'dashboard', label: '仪表盘', icon: LayoutDashboard },
-    { id: 'brews', label: '记录', icon: Coffee }, // Shortened label for mobile
-    { id: 'beans', label: '豆仓', icon: CoffeeBeanIcon }, // Shortened label
+    { id: 'dashboard', label: '概览', icon: LayoutDashboard },
+    { id: 'brews', label: '记录', icon: Coffee },
+    { id: 'specialty', label: '特调', icon: SpecialtyIcon },
+    { id: 'beans', label: '豆仓', icon: CoffeeBeanIcon },
     { id: 'equipment', label: '设备', icon: HandGrinderIcon },
-    { id: 'settings', label: '归档', icon: Archive }, // Shortened label
   ] as const;
+
+  const isSettingsActive = activeTab === 'settings';
 
   return (
     <div className="h-screen bg-slate-50 text-slate-900 flex flex-col md:flex-row overflow-hidden">
       
-      {/* Mobile Top Header - Orange background, extra top padding for status bar */}
+      {/* Mobile Top Header - Logo triggers Settings */}
       <header className="md:hidden fixed top-0 left-0 right-0 bg-amber-600 text-white shadow-md z-[100] flex items-center px-6 pt-12 pb-4 transition-all">
-        <div className="flex items-center gap-2 font-bold text-xl">
+        <button 
+          onClick={() => setActiveTab('settings')}
+          className={`flex items-center gap-2 font-bold text-xl active:scale-95 transition-all outline-none rounded-lg px-2 -ml-2 py-1 ${isSettingsActive ? 'bg-amber-700/50 ring-1 ring-white/30' : ''}`}
+        >
            <Coffee className="stroke-2 w-6 h-6" />
            <span>Coffee</span>
-        </div>
+        </button>
       </header>
 
       {/* Sidebar (Desktop) */}
       <nav className="hidden md:flex bg-white border-r border-slate-200 w-64 flex-col flex-shrink-0 z-[100] shadow-none">
         <div className="p-6">
-          <div className="flex items-center gap-2 text-amber-700 font-bold text-xl tracking-tight">
-            <Coffee className="stroke-2" />
+          <button 
+            onClick={() => setActiveTab('settings')}
+            className={`flex items-center gap-2 font-bold text-xl tracking-tight transition-all outline-none rounded-xl p-3 -m-3 group w-full
+              ${isSettingsActive 
+                ? 'bg-amber-50 text-amber-700' 
+                : 'text-amber-700 hover:bg-slate-50'}
+            `}
+          >
+            <Coffee className={`stroke-2 transition-transform duration-300 ${isSettingsActive ? 'scale-110' : 'group-hover:rotate-12'}`} />
             <span>Coffee</span>
-          </div>
+          </button>
         </div>
 
         <div className="flex flex-col flex-1 p-4 gap-1">
@@ -55,14 +67,14 @@ const Layout: React.FC<LayoutProps> = ({ activeTab, setActiveTab, children }) =>
                 `}
               >
                 <Icon size={20} className={isActive ? "stroke-[2.5]" : "stroke-2"} />
-                <span>{item.label === '记录' ? '冲煮记录' : item.label === '豆仓' ? '咖啡豆' : item.label === '归档' ? '数据归档' : item.label}</span>
+                <span>{item.label}</span>
               </button>
             );
           })}
         </div>
       </nav>
 
-      {/* Main Content Area - Reduced bottom padding to pb-20 */}
+      {/* Main Content Area */}
       <main className="flex-1 overflow-y-auto overflow-x-hidden md:p-8 pt-28 pb-20 md:pb-8 px-4 w-full scroll-smooth">
         <div className="max-w-5xl mx-auto animate-in fade-in duration-300">
            {children}

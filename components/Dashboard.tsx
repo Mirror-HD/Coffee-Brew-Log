@@ -115,16 +115,6 @@ const Dashboard: React.FC<DashboardProps> = ({ logs, beans }) => {
               </div>
 
               <div className="bg-amber-50/80 p-3 rounded-lg border border-amber-100 mt-2 flex-1 min-h-[60px] flex flex-col justify-center">
-                 {lastLog.rating !== undefined && (
-                    <div className="flex items-center gap-1 mb-1">
-                         <div className="flex">
-                            {Array.from({length: 5}).map((_, i) => (
-                                <div key={i} className={`w-2 h-2 rounded-full mr-0.5 ${i < Math.round(lastLog.rating! / 2) ? 'bg-amber-500' : 'bg-slate-300'}`}></div>
-                            ))}
-                        </div>
-                        <span className="text-xs font-bold text-amber-700 ml-1">{lastLog.rating}分</span>
-                    </div>
-                 )}
                  <p className="text-xs text-slate-600 italic leading-relaxed line-clamp-3">
                    {lastLog.notes ? `"${lastLog.notes}"` : '暂无风味描述'}
                  </p>

@@ -31,3 +31,4 @@ export const MOCK_BEANS = [
 export const APP_STORAGE_KEY_BEANS = 'brewlog_beans_v3'; 
 export const APP_STORAGE_KEY_LOGS = 'brewlog_logs_v3';
 export const APP_STORAGE_KEY_EQUIPMENT = 'brewlog_equipment_v1';
+export const APP_STORAGE_KEY_SPECIALTY = 'brewlog_specialty_v1';

@@ -1,8 +1,6 @@
-
 import React, { useState } from 'react';
 import { Bean, BrewLog, BrewMethod, Equipment, EquipmentType } from '../types';
 import { BREW_METHODS } from '../constants';
-// Added missing Play icon import
 import { Droplet, Clock, Thermometer, Plus, ChevronDown, X, Pencil, Trash2, AlertTriangle, RotateCw, Timer, CheckCircle, Save, Play } from 'lucide-react';
 import CustomSelect from './CustomSelect';
 
@@ -35,14 +33,12 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
     grinderId: '',
     brewerId: '',
     grinderSetting: '',
-    rating: '',
     notes: '',
   });
 
   const grinders = equipment.filter(e => e.type === EquipmentType.GRINDER);
   const brewers = equipment.filter(e => e.type === EquipmentType.BREWER || e.type === EquipmentType.OTHER);
 
-  // Helper to get last used settings for a specific method
   const getLastSettings = (method: BrewMethod) => {
       const lastLog = [...logs].reverse().find(l => l.method === method);
       return {
@@ -81,7 +77,7 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
     const defaultMethod = BrewMethod.V60;
     const defaults = getDefaultsForMethod(defaultMethod);
     setFormData({
-      id: undefined, beanId: undefined, method: defaultMethod, ...defaults, rating: '', notes: '', 
+      id: undefined, beanId: undefined, method: defaultMethod, ...defaults, notes: '', 
     });
     setIsFormOpen(false);
     setEditingLogId(null);
@@ -95,12 +91,11 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
         yieldOut: log.yieldOut.toString(),
         timeSeconds: log.timeSeconds.toString(),
         temperature: log.temperature.toString(),
-        rating: log.rating !== undefined ? log.rating.toString() : '',
         startDate: isColdBrew(log.method) ? new Date(log.date).toISOString().slice(0, 13) + ':00' : undefined
     });
-    setIsFormOpen(false); // Close top form if it was open
+    setIsFormOpen(false); 
     setEditingLogId(log.id);
-    setExpandedLogId(null); // Ensure normal expansion is closed
+    setExpandedLogId(null); 
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -115,7 +110,6 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
     const yieldVal = parseFloat(formData.yieldOut) || 0;
     const timeVal = parseFloat(formData.timeSeconds) || 0;
     const tempVal = parseFloat(formData.temperature) || 0; 
-    const ratingVal = formData.rating ? parseFloat(formData.rating) : undefined;
     
     const logDate = (isColdBrew(formData.method) && formData.startDate) 
         ? new Date(formData.startDate).getTime() 
@@ -142,7 +136,6 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
       grinderId: formData.grinderId,
       brewerId: isColdBrew(formData.method) ? '' : formData.brewerId,
       grinderSetting: formData.grinderSetting || '',
-      rating: ratingVal,
       notes: formData.notes || '',
     };
 
@@ -187,15 +180,15 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
   };
 
   const renderFormFields = (isInline: boolean = false) => (
-    <div className={`${isInline ? '' : 'bg-white p-4 md:p-6 rounded-2xl shadow-xl border border-slate-100 mb-6'} animate-in fade-in slide-in-from-top-4`}>
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="col-span-1 md:col-span-2 flex justify-between items-center mb-2">
-                <h3 className="text-lg font-bold text-slate-700">{formData.id ? '编辑记录' : '新冲煮'}</h3>
+    <div className={`${isInline ? '' : 'bg-white p-6 rounded-2xl shadow-xl border border-slate-100 mb-6'} animate-in fade-in slide-in-from-top-4`}>
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div className="col-span-1 md:col-span-2 flex justify-between items-center mb-1">
+                <h3 className="text-lg font-bold text-slate-800">{formData.id ? '编辑冲煮' : '记一杯'}</h3>
                 <button type="button" onClick={resetForm} className="text-slate-400 p-2 hover:bg-slate-50 rounded-full transition-colors"><X size={20}/></button>
             </div>
 
             <div className="col-span-1 md:col-span-2">
-                <label className="block text-xs font-medium text-slate-500 mb-1">咖啡豆</label>
+                <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">咖啡豆</label>
                 <CustomSelect
                     value={formData.beanId}
                     onChange={(val) => setFormData({ ...formData, beanId: val })}
@@ -205,7 +198,7 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
             </div>
 
             <div>
-                <label className="block text-xs font-medium text-slate-500 mb-1">冲煮方式</label>
+                <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">冲煮方式</label>
                 <CustomSelect
                     value={formData.method}
                     onChange={(val) => {
@@ -218,67 +211,67 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
 
             {isColdBrew(formData.method) ? (
                 <div>
-                    <label className="block text-xs font-medium text-slate-500 mb-1">起始时间 (小时)</label>
+                    <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">起始时间</label>
                     <input
                         type="datetime-local" step="3600"
                         value={formData.startDate}
                         onChange={e => setFormData({ ...formData, startDate: e.target.value })}
-                        className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none text-sm"
+                        className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none text-sm font-medium"
                     />
                 </div>
             ) : (
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-4">
                      <div>
-                        <label className="block text-xs font-medium text-slate-500 mb-1">时间 (秒)</label>
+                        <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">时间 (秒)</label>
                         <input
                             type="number" value={formData.timeSeconds}
                             onChange={e => setFormData({ ...formData, timeSeconds: e.target.value })}
-                            className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none"
+                            className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none text-sm font-medium"
                         />
                      </div>
                      <div>
-                        <label className="block text-xs font-medium text-slate-500 mb-1">水温 (°C)</label>
+                        <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">水温 (°C)</label>
                         <input
                             type="number" step="0.5" value={formData.temperature}
                             onChange={e => setFormData({ ...formData, temperature: e.target.value })}
-                            className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none"
+                            className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none text-sm font-medium"
                             placeholder={isEspresso(formData.method) ? '可不填' : ''}
                         />
                      </div>
                 </div>
             )}
 
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-3 gap-4">
                  <div>
-                    <label className="block text-xs font-medium text-slate-500 mb-1">粉重 (g)</label>
+                    <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">粉重 (g)</label>
                     <input
                         type="number" step="0.1" value={formData.doseIn}
                         onChange={e => setFormData({ ...formData, doseIn: e.target.value })}
-                        className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none"
+                        className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none text-sm font-medium"
                     />
                  </div>
                  <div>
-                    <label className="block text-xs font-medium text-slate-500 mb-1">洗磨 (g)</label>
+                    <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">洗磨 (g)</label>
                     <input
                         type="number" step="0.1" value={formData.purgeWeight}
                         onChange={e => setFormData({ ...formData, purgeWeight: e.target.value })}
-                        className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none"
+                        className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none text-sm font-medium"
                         placeholder="可选"
                     />
                  </div>
                  <div>
-                    <label className="block text-xs font-medium text-slate-500 mb-1">{isEspresso(formData.method) ? '液重 (g)' : '注水 (g)'}</label>
+                    <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">{isEspresso(formData.method) ? '液重 (g)' : '注水 (g)'}</label>
                     <input
                         type="number" step="0.1" value={formData.yieldOut}
                         onChange={e => setFormData({ ...formData, yieldOut: e.target.value })}
-                        className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none"
+                        className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none text-sm font-medium"
                     />
                  </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-4">
                 <div>
-                    <label className="block text-xs font-medium text-slate-500 mb-1">磨豆机</label>
+                    <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">磨豆机</label>
                     <CustomSelect
                         value={formData.grinderId}
                         onChange={(val) => setFormData({ ...formData, grinderId: val })}
@@ -286,11 +279,11 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
                     />
                 </div>
                 <div>
-                    <label className="block text-xs font-medium text-slate-500 mb-1">研磨刻度</label>
+                    <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">研磨刻度</label>
                     <input
                         type="text" value={formData.grinderSetting}
                         onChange={e => setFormData({ ...formData, grinderSetting: e.target.value })}
-                        className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none"
+                        className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none text-sm font-medium"
                         placeholder="例如: 3.5"
                     />
                 </div>
@@ -298,7 +291,7 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
              
             {!isEspresso(formData.method) && !isColdBrew(formData.method) && (
                 <div>
-                    <label className="block text-xs font-medium text-slate-500 mb-1">滤杯/器具</label>
+                    <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">滤杯/器具</label>
                     <CustomSelect
                         value={formData.brewerId}
                         onChange={(val) => setFormData({ ...formData, brewerId: val })}
@@ -307,30 +300,21 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
                 </div>
             )}
 
-            <div>
-                 <label className="block text-xs font-medium text-slate-500 mb-1">评分 (1-10)</label>
-                 <input
-                    type="number" step="0.5" max="10" value={formData.rating}
-                    onChange={e => setFormData({ ...formData, rating: e.target.value })}
-                    className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none"
-                 />
-            </div>
-
             <div className="col-span-1 md:col-span-2">
-                <label className="block text-xs font-medium text-slate-500 mb-1">风味笔记</label>
+                <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">风味笔记</label>
                 <textarea
                     value={formData.notes}
                     onChange={e => setFormData({ ...formData, notes: e.target.value })}
-                    className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none h-24 resize-none text-sm"
-                    placeholder="描述口感、风味..."
+                    className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none h-24 resize-none text-sm font-medium"
+                    placeholder="描述口感、风味细节..."
                 />
             </div>
 
             <div className="col-span-1 md:col-span-2 flex justify-end gap-3 mt-2">
-                <button type="button" onClick={resetForm} className="px-6 py-3 rounded-xl text-slate-500 hover:bg-slate-50 font-medium text-sm">取消</button>
-                <button type="submit" className="px-6 py-3 bg-amber-600 text-white rounded-xl hover:bg-amber-700 font-bold shadow-md flex items-center gap-2 text-sm">
+                <button type="button" onClick={resetForm} className="px-6 py-3 rounded-xl text-slate-500 hover:bg-slate-50 font-bold text-sm">取消</button>
+                <button type="submit" className="px-8 py-3 bg-amber-600 text-white rounded-xl hover:bg-amber-700 font-bold shadow-md flex items-center gap-2 text-sm transition-all active:scale-95">
                     {isInline ? <Save size={16}/> : (isColdBrew(formData.method) && formData.timeSeconds === '0' ? <Play size={16}/> : <CheckCircle size={16}/>)}
-                    {isColdBrew(formData.method) && formData.timeSeconds === '0' && !formData.id ? '开始冷萃' : (formData.id ? '保存修改' : '保存记录')}
+                    {isColdBrew(formData.method) && formData.timeSeconds === '0' && !formData.id ? '开始冷萃' : (formData.id ? '保存修改' : '保存冲煮记录')}
                 </button>
             </div>
         </form>
@@ -338,46 +322,40 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
   );
 
   return (
-    <div className="space-y-4 md:space-y-6">
+    <div className="space-y-6">
       {logToDelete && (
           <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setLogToDelete(null)}>
-              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xs p-5 border border-slate-100 scale-100 animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
-                  <div className="flex flex-col items-center text-center mb-5">
-                      <div className="w-12 h-12 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-3">
-                        <AlertTriangle size={24} />
+              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xs p-6 border border-slate-100 scale-100 animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+                  <div className="flex flex-col items-center text-center mb-6">
+                      <div className="w-14 h-14 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-4">
+                        <AlertTriangle size={28} />
                       </div>
                       <h3 className="text-lg font-bold text-slate-800">确认删除</h3>
-                      <p className="text-sm text-slate-600 mt-1">您确定要删除这条冲煮记录吗？</p>
+                      <p className="text-sm text-slate-500 mt-2">您确定要删除这条冲煮记录吗？</p>
                   </div>
                   <div className="flex gap-3">
-                      <button onClick={() => setLogToDelete(null)} className="flex-1 py-3 bg-slate-100 text-slate-700 font-medium rounded-xl">取消</button>
-                      <button onClick={() => { if(logToDelete){ onDeleteLog(logToDelete); setLogToDelete(null); } }} className="flex-1 py-3 bg-red-500 text-white font-medium rounded-xl">删除</button>
+                      <button onClick={() => setLogToDelete(null)} className="flex-1 py-3 bg-slate-100 text-slate-700 font-bold rounded-xl text-sm">取消</button>
+                      <button onClick={() => { if(logToDelete){ onDeleteLog(logToDelete); setLogToDelete(null); } }} className="flex-1 py-3 bg-red-500 text-white font-bold rounded-xl text-sm shadow-sm shadow-red-200">确认删除</button>
                   </div>
               </div>
           </div>
       )}
 
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <h2 className="text-xl md:text-2xl font-bold text-slate-800">冲煮记录</h2>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+        <h2 className="text-2xl font-bold text-slate-800">记录</h2>
         <button
           onClick={() => { resetForm(); setIsFormOpen(!isFormOpen); }}
-          className="flex items-center gap-2 bg-amber-700 hover:bg-amber-800 text-white px-4 py-2.5 rounded-xl transition-colors shadow-sm active:scale-95"
+          className="flex items-center gap-2 bg-amber-700 hover:bg-amber-800 text-white px-5 py-2.5 rounded-xl transition-all shadow-sm active:scale-95 font-bold text-sm"
         >
           <Plus size={18} />
-          <span className="font-medium">{isFormOpen ? '收起表单' : '记一杯'}</span>
+          <span>{isFormOpen ? '收起表单' : '记一杯'}</span>
         </button>
       </div>
 
       {isFormOpen && renderFormFields()}
 
       <div className="space-y-4">
-        {logs.length === 0 ? (
-            <div className="flex flex-col items-center justify-center p-12 text-slate-400 border-2 border-dashed border-slate-200 rounded-xl">
-                <p>暂无冲煮记录</p>
-                <button onClick={() => { resetForm(); setIsFormOpen(true); }} className="mt-2 text-amber-600 font-medium hover:underline">开始第一次冲煮</button>
-            </div>
-        ) : (
-            [...logs].sort((a, b) => b.date - a.date).map(log => {
+        {logs.length > 0 && [...logs].sort((a, b) => b.date - a.date).map(log => {
                 const isEditing = editingLogId === log.id;
                 const isExpanded = expandedLogId === log.id;
                 const bean = beans.find(b => b.id === log.beanId);
@@ -385,7 +363,7 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
 
                 if (isEditing) {
                     return (
-                        <div key={log.id} className="bg-white rounded-2xl border border-amber-200 shadow-lg p-4 md:p-6 animate-in zoom-in-95 duration-200">
+                        <div key={log.id} className="bg-white rounded-2xl border border-amber-200 shadow-lg p-6 animate-in zoom-in-95 duration-200">
                             {renderFormFields(true)}
                         </div>
                     );
@@ -396,82 +374,84 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
                         onClick={() => !isEditing && setExpandedLogId(isExpanded ? null : log.id)}
                         className={`bg-white rounded-xl border transition-all cursor-pointer overflow-hidden ${isExpanded ? 'shadow-md border-amber-200 ring-1 ring-amber-100' : 'shadow-sm border-slate-100 hover:border-amber-200'} ${isOngoingColdBrew ? 'border-blue-200 bg-blue-50/20' : ''}`}
                     >
-                        <div className="p-4 flex flex-col md:flex-row gap-4 md:items-center justify-between">
+                        <div className="p-5 flex flex-col md:flex-row gap-4 md:items-center justify-between">
                             <div className="flex-1">
-                                <div className="flex justify-between items-start mb-1">
-                                    <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                                <div className="flex justify-between items-start mb-1.5">
+                                    <h3 className="font-bold text-slate-800 text-base flex items-center gap-2">
                                         {bean?.name || '未知咖啡豆'}
                                         {isOngoingColdBrew && <span className="flex h-2 w-2 rounded-full bg-blue-500 animate-pulse"></span>}
                                     </h3>
-                                    <span className="text-xs text-slate-400 font-mono">{new Date(log.date).toLocaleDateString()}</span>
+                                    <span className="text-[11px] text-slate-400 font-bold uppercase tracking-wider">{new Date(log.date).toLocaleDateString()}</span>
                                 </div>
-                                <div className="flex flex-wrap gap-2 text-xs text-slate-600 items-center">
+                                <div className="flex flex-wrap gap-2 text-xs font-bold text-slate-500 items-center">
                                     <span className={`px-2 py-0.5 rounded-md ${isOngoingColdBrew ? 'bg-blue-100 text-blue-700' : 'bg-slate-100'}`}>{log.method}</span>
-                                    <span className="flex items-center gap-1"><Droplet size={12}/> {log.doseIn}g / {log.yieldOut}g</span>
-                                    {log.purgeWeight && log.purgeWeight > 0 && <span className="flex items-center gap-1 text-slate-400"><RotateCw size={12}/> 洗磨 {log.purgeWeight}g</span>}
-                                    
+                                    <span className="flex items-center gap-1"><Droplet size={13} className="text-amber-600"/> {log.doseIn}g / {log.yieldOut}g</span>
                                     {isOngoingColdBrew ? (
-                                        <span className="flex items-center gap-1 text-blue-600 font-medium italic"><Timer size={12}/> 萃取中...</span>
+                                        <span className="flex items-center gap-1 text-blue-600 font-bold italic"><Timer size={13}/> 萃取中...</span>
                                     ) : (
-                                        log.timeSeconds > 0 && <span className="flex items-center gap-1"><Clock size={12}/> {formatDuration(log.timeSeconds, log.method)}</span>
+                                        log.timeSeconds > 0 && <span className="flex items-center gap-1"><Clock size={13} className="text-slate-400"/> {formatDuration(log.timeSeconds, log.method)}</span>
                                     )}
-                                    {log.rating && <span className="text-amber-600 font-bold">★ {log.rating}</span>}
                                 </div>
                             </div>
                             
                             {isOngoingColdBrew ? (
                                 <button 
                                     onClick={(e) => { e.stopPropagation(); handleFinishColdBrew(log); }}
-                                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 shadow-sm transition-all active:scale-95"
+                                    className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 shadow-sm transition-all active:scale-95"
                                 >
                                     <CheckCircle size={16}/> 结束冷萃
                                 </button>
                             ) : (
-                                <div className={`transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''} text-slate-400 md:ml-4 flex justify-center`}>
-                                    <ChevronDown size={20} />
+                                <div className={`transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''} text-slate-300 md:ml-4 flex justify-center`}>
+                                    <ChevronDown size={22} />
                                 </div>
                             )}
                         </div>
 
                         {isExpanded && (
-                             <div className="px-4 pb-4 pt-0 border-t border-slate-50 bg-slate-50/30">
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 text-sm text-slate-600">
+                             <div className="px-5 pb-5 pt-1 border-t border-slate-50 bg-slate-50/30">
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-4">
                                     <div>
-                                        <span className="block text-xs text-slate-400 mb-1">磨豆机 / 刻度</span>
-                                        <span className="font-medium">{getEquipmentName(log.grinderId) || '未指定'}</span>
-                                        <span className="text-slate-400 mx-1">@</span>
-                                        <span className="font-medium">{log.grinderSetting || '-'}</span>
+                                        <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">磨豆机 / 刻度</span>
+                                        <div className="text-sm font-bold text-slate-700 leading-snug">
+                                            {getEquipmentName(log.grinderId) || '未指定'}
+                                            <span className="text-amber-600 mx-1.5">@</span>
+                                            {log.grinderSetting || '-'}
+                                        </div>
                                     </div>
                                     {!isEspresso(log.method) && !isColdBrew(log.method) && (
                                         <div>
-                                            <span className="block text-xs text-slate-400 mb-1">滤杯</span>
-                                            <span className="font-medium">{getEquipmentName(log.brewerId) || '未指定'}</span>
+                                            <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">滤杯/器具</span>
+                                            <div className="text-sm font-bold text-slate-700 leading-snug">{getEquipmentName(log.brewerId) || '未指定'}</div>
                                         </div>
                                     )}
                                     {log.temperature > 0 && (
                                         <div>
-                                            <span className="block text-xs text-slate-400 mb-1">水温</span>
-                                            <span className="flex items-center gap-1"><Thermometer size={14}/> {log.temperature}°C</span>
+                                            <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">冲煮水温</span>
+                                            <div className="text-sm font-bold text-slate-700 leading-snug flex items-center gap-1"><Thermometer size={14} className="text-red-400"/> {log.temperature}°C</div>
                                         </div>
                                     )}
                                     <div>
-                                         <span className="block text-xs text-slate-400 mb-1">粉液比</span>
-                                         <span className="font-medium">1 : {(log.yieldOut / log.doseIn).toFixed(1)}</span>
+                                         <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">粉液比</span>
+                                         <div className="text-sm font-bold text-slate-700 leading-snug">1 : {(log.yieldOut / log.doseIn).toFixed(1)}</div>
                                     </div>
                                 </div>
                                 
-                                {log.notes && <div className="mt-4 bg-white p-3 rounded-lg border border-slate-100 italic text-slate-700 text-sm">"{log.notes}"</div>}
+                                {log.notes && (
+                                    <div className="mt-5 p-4 bg-white rounded-xl border border-slate-100 italic text-sm text-slate-600 leading-relaxed shadow-sm">
+                                        "{log.notes}"
+                                    </div>
+                                )}
 
-                                <div className="flex justify-end gap-3 mt-4 pt-2 border-t border-slate-100/50">
-                                    <button onClick={(e) => { e.stopPropagation(); handleEdit(log); }} className="flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-amber-600 px-3 py-1.5 rounded-lg hover:bg-white border border-transparent hover:border-slate-100 transition-all"><Pencil size={14} /> 编辑</button>
-                                    <button onClick={(e) => { e.stopPropagation(); setLogToDelete(log.id); }} className="flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-red-600 px-3 py-1.5 rounded-lg hover:bg-white border border-transparent hover:border-slate-100 transition-all"><Trash2 size={14} /> 删除</button>
+                                <div className="flex justify-end gap-2 mt-5 pt-1">
+                                    <button onClick={(e) => { e.stopPropagation(); handleEdit(log); }} className="flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-amber-700 px-3.5 py-2 rounded-xl hover:bg-white border border-transparent hover:border-slate-100 transition-all"><Pencil size={14} /> 编辑</button>
+                                    <button onClick={(e) => { e.stopPropagation(); setLogToDelete(log.id); }} className="flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-red-600 px-3.5 py-2 rounded-xl hover:bg-white border border-transparent hover:border-slate-100 transition-all"><Trash2 size={14} /> 删除</button>
                                 </div>
                              </div>
                         )}
                     </div>
                 );
-            })
-        )}
+            })}
       </div>
     </div>
   );
