@@ -631,7 +631,8 @@ const BeanManager: React.FC<BeanManagerProps> = ({ beans, onAddBean, onUpdateBea
              const isLow = percentage < 20;
              const isBlend = bean.category === BeanCategory.BLEND;
              const isFinished = !bean.isActive;
-             const restingDays = calculateRestingDays(bean.roastDate);
+             // Stop calculating resting days if bean is finished
+             const restingDays = isFinished ? null : calculateRestingDays(bean.roastDate);
              
              // Owner Logic
              const isClub = bean.owner === BeanOwner.CLUB;

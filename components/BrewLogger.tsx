@@ -1,7 +1,9 @@
+
 import React, { useState } from 'react';
 import { Bean, BrewLog, BrewMethod, Equipment, EquipmentType } from '../types';
 import { BREW_METHODS } from '../constants';
-import { Droplet, Clock, Thermometer, Plus, ChevronDown, X, Pencil, Trash2, AlertTriangle, RotateCw, Timer, Play, CheckCircle } from 'lucide-react';
+// Added missing Play icon import
+import { Droplet, Clock, Thermometer, Plus, ChevronDown, X, Pencil, Trash2, AlertTriangle, RotateCw, Timer, CheckCircle, Save, Play } from 'lucide-react';
 import CustomSelect from './CustomSelect';
 
 interface BrewLoggerProps {
@@ -16,64 +18,12 @@ interface BrewLoggerProps {
 
 const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLog, onUpdateLog, onDeleteLog, onUpdateBean }) => {
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingLogId, setEditingLogId] = useState<string | null>(null);
   const [expandedLogId, setExpandedLogId] = useState<string | null>(null);
   const [logToDelete, setLogToDelete] = useState<string | null>(null);
 
   const isColdBrew = (method?: string) => method === BrewMethod.COLD_BREW;
   const isEspresso = (method?: string) => method === BrewMethod.ESPRESSO;
-
-  // Helper to get last used settings for a specific method
-  const getLastSettings = (method: BrewMethod) => {
-      const lastLog = [...logs].reverse().find(l => l.method === method);
-      return {
-          grinderId: lastLog?.grinderId || '',
-          brewerId: lastLog?.brewerId || '',
-          grinderSetting: lastLog?.grinderSetting || '',
-          purgeWeight: lastLog?.purgeWeight?.toString() || ''
-      };
-  };
-
-  const getDefaultsForMethod = (method: BrewMethod) => {
-      const lastSettings = getLastSettings(method);
-      
-      if (method === BrewMethod.ESPRESSO) {
-          return {
-              doseIn: '18',
-              yieldOut: '',
-              timeSeconds: '',
-              temperature: '',
-              grinderId: lastSettings.grinderId,
-              brewerId: '',
-              grinderSetting: lastSettings.grinderSetting,
-              purgeWeight: lastSettings.purgeWeight || '',
-          };
-      } 
-      
-      if (method === BrewMethod.COLD_BREW) {
-          return {
-              doseIn: '30',
-              yieldOut: '300',
-              timeSeconds: '0', // 0 means active
-              temperature: '0', 
-              grinderId: lastSettings.grinderId,
-              brewerId: '',
-              grinderSetting: lastSettings.grinderSetting,
-              purgeWeight: lastSettings.purgeWeight || '',
-              startDate: new Date().toISOString().slice(0, 13) + ':00', // Accurate to hour
-          };
-      }
-
-      return {
-          doseIn: '15',
-          yieldOut: '225',
-          timeSeconds: '',
-          temperature: '',
-          grinderId: lastSettings.grinderId,
-          brewerId: lastSettings.brewerId,
-          grinderSetting: lastSettings.grinderSetting,
-          purgeWeight: lastSettings.purgeWeight || '',
-      };
-  };
 
   const [formData, setFormData] = useState<any>({
     method: BrewMethod.V60,
@@ -92,18 +42,49 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
   const grinders = equipment.filter(e => e.type === EquipmentType.GRINDER);
   const brewers = equipment.filter(e => e.type === EquipmentType.BREWER || e.type === EquipmentType.OTHER);
 
+  // Helper to get last used settings for a specific method
+  const getLastSettings = (method: BrewMethod) => {
+      const lastLog = [...logs].reverse().find(l => l.method === method);
+      return {
+          grinderId: lastLog?.grinderId || '',
+          brewerId: lastLog?.brewerId || '',
+          grinderSetting: lastLog?.grinderSetting || '',
+          purgeWeight: lastLog?.purgeWeight?.toString() || ''
+      };
+  };
+
+  const getDefaultsForMethod = (method: BrewMethod) => {
+      const lastSettings = getLastSettings(method);
+      if (method === BrewMethod.ESPRESSO) {
+          return {
+              doseIn: '18', yieldOut: '', timeSeconds: '', temperature: '',
+              grinderId: lastSettings.grinderId, brewerId: '', grinderSetting: lastSettings.grinderSetting,
+              purgeWeight: lastSettings.purgeWeight || '',
+          };
+      } 
+      if (method === BrewMethod.COLD_BREW) {
+          return {
+              doseIn: '30', yieldOut: '300', timeSeconds: '0', temperature: '0', 
+              grinderId: lastSettings.grinderId, brewerId: '', grinderSetting: lastSettings.grinderSetting,
+              purgeWeight: lastSettings.purgeWeight || '',
+              startDate: new Date().toISOString().slice(0, 13) + ':00',
+          };
+      }
+      return {
+          doseIn: '15', yieldOut: '225', timeSeconds: '', temperature: '',
+          grinderId: lastSettings.grinderId, brewerId: lastSettings.brewerId, grinderSetting: lastSettings.grinderSetting,
+          purgeWeight: lastSettings.purgeWeight || '',
+      };
+  };
+
   const resetForm = () => {
     const defaultMethod = BrewMethod.V60;
     const defaults = getDefaultsForMethod(defaultMethod);
     setFormData({
-      id: undefined,
-      beanId: undefined,
-      method: defaultMethod,
-      ...defaults,
-      rating: '',
-      notes: '', 
+      id: undefined, beanId: undefined, method: defaultMethod, ...defaults, rating: '', notes: '', 
     });
     setIsFormOpen(false);
+    setEditingLogId(null);
   };
 
   const handleEdit = (log: BrewLog) => {
@@ -117,16 +98,9 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
         rating: log.rating !== undefined ? log.rating.toString() : '',
         startDate: isColdBrew(log.method) ? new Date(log.date).toISOString().slice(0, 13) + ':00' : undefined
     });
-    setIsFormOpen(true);
-  };
-
-  const handleFinishColdBrew = (log: BrewLog) => {
-      const now = Date.now();
-      const diffSeconds = Math.floor((now - log.date) / 1000);
-      onUpdateLog({
-          ...log,
-          timeSeconds: Math.max(1, diffSeconds)
-      });
+    setIsFormOpen(false); // Close top form if it was open
+    setEditingLogId(log.id);
+    setExpandedLogId(null); // Ensure normal expansion is closed
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -143,7 +117,6 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
     const tempVal = parseFloat(formData.temperature) || 0; 
     const ratingVal = formData.rating ? parseFloat(formData.rating) : undefined;
     
-    // Use manual start date for Cold Brew if provided
     const logDate = (isColdBrew(formData.method) && formData.startDate) 
         ? new Date(formData.startDate).getTime() 
         : (formData.date || Date.now());
@@ -181,6 +154,12 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
     resetForm();
   };
 
+  const handleFinishColdBrew = (log: BrewLog) => {
+      const now = Date.now();
+      const diffSeconds = Math.floor((now - log.date) / 1000);
+      onUpdateLog({ ...log, timeSeconds: Math.max(1, diffSeconds) });
+  };
+
   const formatDuration = (seconds: number, method?: BrewMethod) => {
     if (method === BrewMethod.COLD_BREW) {
         const totalHours = Math.floor(seconds / 3600);
@@ -191,7 +170,6 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
         }
         return `${Math.max(1, totalHours)}小时`;
     }
-    
     if (seconds >= 3600) {
         const hours = Math.floor(seconds / 3600);
         const mins = Math.floor((seconds % 3600) / 60);
@@ -207,6 +185,157 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
       const eq = equipment.find(e => e.id === id);
       return eq ? eq.name : '';
   };
+
+  const renderFormFields = (isInline: boolean = false) => (
+    <div className={`${isInline ? '' : 'bg-white p-4 md:p-6 rounded-2xl shadow-xl border border-slate-100 mb-6'} animate-in fade-in slide-in-from-top-4`}>
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="col-span-1 md:col-span-2 flex justify-between items-center mb-2">
+                <h3 className="text-lg font-bold text-slate-700">{formData.id ? '编辑记录' : '新冲煮'}</h3>
+                <button type="button" onClick={resetForm} className="text-slate-400 p-2 hover:bg-slate-50 rounded-full transition-colors"><X size={20}/></button>
+            </div>
+
+            <div className="col-span-1 md:col-span-2">
+                <label className="block text-xs font-medium text-slate-500 mb-1">咖啡豆</label>
+                <CustomSelect
+                    value={formData.beanId}
+                    onChange={(val) => setFormData({ ...formData, beanId: val })}
+                    options={beans.filter(b => b.isActive || b.id === formData.beanId).map(b => ({ value: b.id, label: `${b.name} (${b.roaster})` }))}
+                    placeholder="选择咖啡豆..."
+                />
+            </div>
+
+            <div>
+                <label className="block text-xs font-medium text-slate-500 mb-1">冲煮方式</label>
+                <CustomSelect
+                    value={formData.method}
+                    onChange={(val) => {
+                        const newMethod = val as BrewMethod;
+                        setFormData((prev: any) => ({ ...prev, method: newMethod, ...getDefaultsForMethod(newMethod) }));
+                    }}
+                    options={BREW_METHODS.map(m => ({ value: m, label: m }))}
+                />
+            </div>
+
+            {isColdBrew(formData.method) ? (
+                <div>
+                    <label className="block text-xs font-medium text-slate-500 mb-1">起始时间 (小时)</label>
+                    <input
+                        type="datetime-local" step="3600"
+                        value={formData.startDate}
+                        onChange={e => setFormData({ ...formData, startDate: e.target.value })}
+                        className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none text-sm"
+                    />
+                </div>
+            ) : (
+                <div className="grid grid-cols-2 gap-3">
+                     <div>
+                        <label className="block text-xs font-medium text-slate-500 mb-1">时间 (秒)</label>
+                        <input
+                            type="number" value={formData.timeSeconds}
+                            onChange={e => setFormData({ ...formData, timeSeconds: e.target.value })}
+                            className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none"
+                        />
+                     </div>
+                     <div>
+                        <label className="block text-xs font-medium text-slate-500 mb-1">水温 (°C)</label>
+                        <input
+                            type="number" step="0.5" value={formData.temperature}
+                            onChange={e => setFormData({ ...formData, temperature: e.target.value })}
+                            className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none"
+                            placeholder={isEspresso(formData.method) ? '可不填' : ''}
+                        />
+                     </div>
+                </div>
+            )}
+
+            <div className="grid grid-cols-3 gap-3">
+                 <div>
+                    <label className="block text-xs font-medium text-slate-500 mb-1">粉重 (g)</label>
+                    <input
+                        type="number" step="0.1" value={formData.doseIn}
+                        onChange={e => setFormData({ ...formData, doseIn: e.target.value })}
+                        className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none"
+                    />
+                 </div>
+                 <div>
+                    <label className="block text-xs font-medium text-slate-500 mb-1">洗磨 (g)</label>
+                    <input
+                        type="number" step="0.1" value={formData.purgeWeight}
+                        onChange={e => setFormData({ ...formData, purgeWeight: e.target.value })}
+                        className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none"
+                        placeholder="可选"
+                    />
+                 </div>
+                 <div>
+                    <label className="block text-xs font-medium text-slate-500 mb-1">{isEspresso(formData.method) ? '液重 (g)' : '注水 (g)'}</label>
+                    <input
+                        type="number" step="0.1" value={formData.yieldOut}
+                        onChange={e => setFormData({ ...formData, yieldOut: e.target.value })}
+                        className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none"
+                    />
+                 </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+                <div>
+                    <label className="block text-xs font-medium text-slate-500 mb-1">磨豆机</label>
+                    <CustomSelect
+                        value={formData.grinderId}
+                        onChange={(val) => setFormData({ ...formData, grinderId: val })}
+                        options={[{value: '', label: '未指定'}, ...grinders.map(g => ({ value: g.id, label: g.name }))]}
+                    />
+                </div>
+                <div>
+                    <label className="block text-xs font-medium text-slate-500 mb-1">研磨刻度</label>
+                    <input
+                        type="text" value={formData.grinderSetting}
+                        onChange={e => setFormData({ ...formData, grinderSetting: e.target.value })}
+                        className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none"
+                        placeholder="例如: 3.5"
+                    />
+                </div>
+            </div>
+             
+            {!isEspresso(formData.method) && !isColdBrew(formData.method) && (
+                <div>
+                    <label className="block text-xs font-medium text-slate-500 mb-1">滤杯/器具</label>
+                    <CustomSelect
+                        value={formData.brewerId}
+                        onChange={(val) => setFormData({ ...formData, brewerId: val })}
+                        options={[{value: '', label: '未指定'}, ...brewers.map(b => ({ value: b.id, label: b.name }))]}
+                    />
+                </div>
+            )}
+
+            <div>
+                 <label className="block text-xs font-medium text-slate-500 mb-1">评分 (1-10)</label>
+                 <input
+                    type="number" step="0.5" max="10" value={formData.rating}
+                    onChange={e => setFormData({ ...formData, rating: e.target.value })}
+                    className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none"
+                 />
+            </div>
+
+            <div className="col-span-1 md:col-span-2">
+                <label className="block text-xs font-medium text-slate-500 mb-1">风味笔记</label>
+                <textarea
+                    value={formData.notes}
+                    onChange={e => setFormData({ ...formData, notes: e.target.value })}
+                    className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none h-24 resize-none text-sm"
+                    placeholder="描述口感、风味..."
+                />
+            </div>
+
+            <div className="col-span-1 md:col-span-2 flex justify-end gap-3 mt-2">
+                <button type="button" onClick={resetForm} className="px-6 py-3 rounded-xl text-slate-500 hover:bg-slate-50 font-medium text-sm">取消</button>
+                <button type="submit" className="px-6 py-3 bg-amber-600 text-white rounded-xl hover:bg-amber-700 font-bold shadow-md flex items-center gap-2 text-sm">
+                    {isInline ? <Save size={16}/> : (isColdBrew(formData.method) && formData.timeSeconds === '0' ? <Play size={16}/> : <CheckCircle size={16}/>)}
+                    {isColdBrew(formData.method) && formData.timeSeconds === '0' && !formData.id ? '开始冷萃' : (formData.id ? '保存修改' : '保存记录')}
+                </button>
+            </div>
+        </form>
+    </div>
+  );
 
   return (
     <div className="space-y-4 md:space-y-6">
@@ -235,166 +364,11 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
           className="flex items-center gap-2 bg-amber-700 hover:bg-amber-800 text-white px-4 py-2.5 rounded-xl transition-colors shadow-sm active:scale-95"
         >
           <Plus size={18} />
-          <span className="font-medium">{isFormOpen ? '关闭' : '记一杯'}</span>
+          <span className="font-medium">{isFormOpen ? '收起表单' : '记一杯'}</span>
         </button>
       </div>
 
-      {isFormOpen && (
-        <div className="bg-white p-4 md:p-6 rounded-2xl shadow-xl border border-slate-100 animate-in fade-in slide-in-from-top-4 mb-6">
-            <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="col-span-1 md:col-span-2 flex justify-between items-center mb-2">
-                    <h3 className="text-lg font-bold text-slate-700">{formData.id ? '编辑记录' : '新冲煮'}</h3>
-                    <button type="button" onClick={resetForm} className="text-slate-400 p-2"><X size={20}/></button>
-                </div>
-
-                <div className="col-span-1 md:col-span-2">
-                    <label className="block text-xs font-medium text-slate-500 mb-1">咖啡豆</label>
-                    <CustomSelect
-                        value={formData.beanId}
-                        onChange={(val) => setFormData({ ...formData, beanId: val })}
-                        options={beans.filter(b => b.isActive || b.id === formData.beanId).map(b => ({ value: b.id, label: `${b.name} (${b.roaster})` }))}
-                        placeholder="选择咖啡豆..."
-                    />
-                </div>
-
-                <div>
-                    <label className="block text-xs font-medium text-slate-500 mb-1">冲煮方式</label>
-                    <CustomSelect
-                        value={formData.method}
-                        onChange={(val) => {
-                            const newMethod = val as BrewMethod;
-                            setFormData((prev: any) => ({ ...prev, method: newMethod, ...getDefaultsForMethod(newMethod) }));
-                        }}
-                        options={BREW_METHODS.map(m => ({ value: m, label: m }))}
-                    />
-                </div>
-
-                {isColdBrew(formData.method) ? (
-                    <div>
-                        <label className="block text-xs font-medium text-slate-500 mb-1">起始时间 (小时)</label>
-                        <input
-                            type="datetime-local"
-                            step="3600"
-                            value={formData.startDate}
-                            onChange={e => setFormData({ ...formData, startDate: e.target.value })}
-                            className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none text-sm"
-                        />
-                    </div>
-                ) : (
-                    <div className="grid grid-cols-2 gap-3">
-                         <div>
-                            <label className="block text-xs font-medium text-slate-500 mb-1">时间 (秒)</label>
-                            <input
-                                type="number"
-                                value={formData.timeSeconds}
-                                onChange={e => setFormData({ ...formData, timeSeconds: e.target.value })}
-                                className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none"
-                            />
-                         </div>
-                         <div>
-                            <label className="block text-xs font-medium text-slate-500 mb-1">水温 (°C)</label>
-                            <input
-                                type="number" step="0.5"
-                                value={formData.temperature}
-                                onChange={e => setFormData({ ...formData, temperature: e.target.value })}
-                                className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none"
-                                placeholder={isEspresso(formData.method) ? '可不填' : ''}
-                            />
-                         </div>
-                    </div>
-                )}
-
-                <div className="grid grid-cols-3 gap-3">
-                     <div>
-                        <label className="block text-xs font-medium text-slate-500 mb-1">粉重 (g)</label>
-                        <input
-                            type="number" step="0.1"
-                            value={formData.doseIn}
-                            onChange={e => setFormData({ ...formData, doseIn: e.target.value })}
-                            className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none"
-                        />
-                     </div>
-                     <div>
-                        <label className="block text-xs font-medium text-slate-500 mb-1">洗磨 (g)</label>
-                        <input
-                            type="number" step="0.1"
-                            value={formData.purgeWeight}
-                            onChange={e => setFormData({ ...formData, purgeWeight: e.target.value })}
-                            className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none"
-                            placeholder="可选"
-                        />
-                     </div>
-                     <div>
-                        <label className="block text-xs font-medium text-slate-500 mb-1">{isEspresso(formData.method) ? '液重 (g)' : '注水 (g)'}</label>
-                        <input
-                            type="number" step="0.1"
-                            value={formData.yieldOut}
-                            onChange={e => setFormData({ ...formData, yieldOut: e.target.value })}
-                            className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none"
-                        />
-                     </div>
-                </div>
-
-                 <div>
-                    <label className="block text-xs font-medium text-slate-500 mb-1">磨豆机</label>
-                     <CustomSelect
-                        value={formData.grinderId}
-                        onChange={(val) => setFormData({ ...formData, grinderId: val })}
-                        options={[{value: '', label: '未指定'}, ...grinders.map(g => ({ value: g.id, label: g.name }))]}
-                    />
-                </div>
-                 
-                 {!isEspresso(formData.method) && !isColdBrew(formData.method) && (
-                    <div>
-                        <label className="block text-xs font-medium text-slate-500 mb-1">滤杯/器具</label>
-                        <CustomSelect
-                            value={formData.brewerId}
-                            onChange={(val) => setFormData({ ...formData, brewerId: val })}
-                            options={[{value: '', label: '未指定'}, ...brewers.map(b => ({ value: b.id, label: b.name }))]}
-                        />
-                    </div>
-                 )}
-
-                <div>
-                    <label className="block text-xs font-medium text-slate-500 mb-1">研磨刻度</label>
-                    <input
-                        type="text"
-                        value={formData.grinderSetting}
-                        onChange={e => setFormData({ ...formData, grinderSetting: e.target.value })}
-                        className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none"
-                        placeholder="例如: 3.5"
-                    />
-                </div>
-
-                <div>
-                     <label className="block text-xs font-medium text-slate-500 mb-1">评分 (1-10)</label>
-                     <input
-                        type="number" step="0.5" max="10"
-                        value={formData.rating}
-                        onChange={e => setFormData({ ...formData, rating: e.target.value })}
-                        className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none"
-                     />
-                </div>
-
-                <div className="col-span-1 md:col-span-2">
-                    <label className="block text-xs font-medium text-slate-500 mb-1">风味笔记</label>
-                    <textarea
-                        value={formData.notes}
-                        onChange={e => setFormData({ ...formData, notes: e.target.value })}
-                        className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none h-24 resize-none"
-                        placeholder="描述口感、风味..."
-                    />
-                </div>
-
-                <div className="col-span-1 md:col-span-2 flex justify-end gap-3 mt-2">
-                    <button type="button" onClick={resetForm} className="px-6 py-3 rounded-xl text-slate-500 hover:bg-slate-50 font-medium">取消</button>
-                    <button type="submit" className="px-6 py-3 bg-amber-600 text-white rounded-xl hover:bg-amber-700 font-bold shadow-md">
-                        {isColdBrew(formData.method) && formData.timeSeconds === '0' && !formData.id ? '开始冷萃' : (formData.id ? '更新记录' : '保存记录')}
-                    </button>
-                </div>
-            </form>
-        </div>
-      )}
+      {isFormOpen && renderFormFields()}
 
       <div className="space-y-4">
         {logs.length === 0 ? (
@@ -404,13 +378,22 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
             </div>
         ) : (
             [...logs].sort((a, b) => b.date - a.date).map(log => {
-                const bean = beans.find(b => b.id === log.beanId);
+                const isEditing = editingLogId === log.id;
                 const isExpanded = expandedLogId === log.id;
+                const bean = beans.find(b => b.id === log.beanId);
                 const isOngoingColdBrew = isColdBrew(log.method) && log.timeSeconds === 0;
+
+                if (isEditing) {
+                    return (
+                        <div key={log.id} className="bg-white rounded-2xl border border-amber-200 shadow-lg p-4 md:p-6 animate-in zoom-in-95 duration-200">
+                            {renderFormFields(true)}
+                        </div>
+                    );
+                }
                 
                 return (
                     <div key={log.id} 
-                        onClick={() => setExpandedLogId(isExpanded ? null : log.id)}
+                        onClick={() => !isEditing && setExpandedLogId(isExpanded ? null : log.id)}
                         className={`bg-white rounded-xl border transition-all cursor-pointer overflow-hidden ${isExpanded ? 'shadow-md border-amber-200 ring-1 ring-amber-100' : 'shadow-sm border-slate-100 hover:border-amber-200'} ${isOngoingColdBrew ? 'border-blue-200 bg-blue-50/20' : ''}`}
                     >
                         <div className="p-4 flex flex-col md:flex-row gap-4 md:items-center justify-between">

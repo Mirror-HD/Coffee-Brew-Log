@@ -1,21 +1,20 @@
+
 import { GoogleGenAI } from "@google/genai";
 import { BrewLog, Bean, Equipment, BeanCategory, BrewMethod } from "../types";
 
-const apiKey = process.env.API_KEY || '';
-
-const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
+// Always use process.env.API_KEY directly in the constructor
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 export const checkConnection = async (): Promise<boolean> => {
-  if (!ai) return false;
   try {
     // Create a timeout promise that rejects after 10 seconds
     const timeoutPromise = new Promise<never>((_, reject) => 
       setTimeout(() => reject(new Error('Connection timeout')), 10000)
     );
 
-    // Race the API call against the timeout
+    // Race the API call against the timeout. Using gemini-3-flash-preview for a basic text task.
     const apiPromise = ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3-flash-preview',
       contents: 'ping',
     });
 
@@ -28,8 +27,6 @@ export const checkConnection = async (): Promise<boolean> => {
 };
 
 export const analyzeBrew = async (log: BrewLog, bean: Bean, grinder?: Equipment, brewer?: Equipment): Promise<string> => {
-  if (!ai) return "缺少 API 密钥。请检查环境配置。";
-
   // Construct Bean Description
   let beanDesc = `${bean.name} (${bean.roaster}, ${bean.roastLevel})`;
   if (bean.category === BeanCategory.BLEND && bean.blendParts && bean.blendParts.length > 0) {
@@ -68,8 +65,9 @@ export const analyzeBrew = async (log: BrewLog, bean: Bean, grinder?: Equipment,
   `;
 
   try {
+    // Using gemini-3-pro-preview for complex reasoning task
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3-pro-preview',
       contents: prompt,
     });
     return response.text || "无法生成分析。";
@@ -80,13 +78,12 @@ export const analyzeBrew = async (log: BrewLog, bean: Bean, grinder?: Equipment,
 };
 
 export const suggestBeanNotes = async (origin: string, process: string, roast: string): Promise<string> => {
-  if (!ai) return "";
-
   const prompt = `针对一款产自 ${origin}，处理方式为 ${process}，烘焙度为 ${roast} 的咖啡豆，请列出 3-5 个可能的风味描述词（仅列出形容词，用逗号分隔，使用中文）。`;
 
   try {
+    // Using gemini-3-flash-preview for a basic text task
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3-flash-preview',
       contents: prompt,
     });
     return response.text || "";
