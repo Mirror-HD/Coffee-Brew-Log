@@ -101,6 +101,7 @@ export interface SpecialtyRecipe {
   id: string;
   name: string;
   baseBeanId?: string;
+  bases?: Ingredient[]; // Supported bases with amounts
   ingredients: Ingredient[];
   instructions: string;
   date: number;
