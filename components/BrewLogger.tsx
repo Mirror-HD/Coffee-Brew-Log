@@ -1,5 +1,55 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Bean, BrewLog, BrewMethod, Equipment, EquipmentType } from '../types';
+
+const ColdBrewTimer: React.FC<{ startDate: number }> = ({ startDate }) => {
+  const [elapsed, setElapsed] = useState(0);
+
+  useEffect(() => {
+    const calcElapsed = () => Math.floor((Date.now() - startDate) / 1000);
+    setElapsed(calcElapsed());
+
+    const interval = setInterval(() => {
+      setElapsed(calcElapsed());
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [startDate]);
+
+  if (elapsed < 0) {
+    const absSeconds = Math.abs(elapsed);
+    const hours = Math.floor(absSeconds / 3600);
+    const minutes = Math.floor((absSeconds % 3600) / 60);
+    const secs = absSeconds % 60;
+    return (
+      <span className="flex items-center gap-1.5 text-slate-500 font-mono">
+        <Timer size={12} className="text-slate-400 animate-pulse" />
+        <span>预计起始 (剩 {hours > 0 ? `${hours}小时` : ''}{minutes}分{secs}秒)</span>
+      </span>
+    );
+  }
+
+  const days = Math.floor(elapsed / 86400);
+  const hours = Math.floor((elapsed % 86400) / 3600);
+  const minutes = Math.floor((elapsed % 3600) / 60);
+  const secs = elapsed % 60;
+
+  let timeStr = '已冷萃: ';
+  if (days > 0) {
+    timeStr += `${days}天`;
+  }
+  if (days > 0 || hours > 0) {
+    timeStr += `${hours}小时`;
+  }
+  timeStr += `${minutes}分${secs}秒`;
+
+  return (
+    <span className="flex items-center gap-1.5 text-blue-600 font-mono font-medium animate-pulse">
+      <Timer size={12} className="animate-spin text-blue-500" style={{ animationDuration: '4s' }} />
+      <span>{timeStr}</span>
+    </span>
+  );
+};
+
 import { BREW_METHODS } from '../constants';
 import { Droplet, Clock, Thermometer, Plus, ChevronDown, X, Pencil, Trash2, AlertTriangle, RotateCw, Timer, CheckCircle, Save, Play } from 'lucide-react';
 import CustomSelect from './CustomSelect';
@@ -19,6 +69,12 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
   const [editingLogId, setEditingLogId] = useState<string | null>(null);
   const [expandedLogId, setExpandedLogId] = useState<string | null>(null);
   const [logToDelete, setLogToDelete] = useState<string | null>(null);
+
+  const getLocalDatetimeString = (dateInput: Date | number = new Date()) => {
+    const d = typeof dateInput === 'number' ? new Date(dateInput) : dateInput;
+    const tzoffset = d.getTimezoneOffset() * 60000;
+    return new Date(d.getTime() - tzoffset).toISOString().slice(0, 13) + ':00';
+  };
 
   const isColdBrew = (method?: string) => method === BrewMethod.COLD_BREW;
   const isEspresso = (method?: string) => method === BrewMethod.ESPRESSO;
@@ -63,7 +119,7 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
               doseIn: '30', yieldOut: '300', timeSeconds: '0', temperature: '0', 
               grinderId: lastSettings.grinderId, brewerId: '', grinderSetting: lastSettings.grinderSetting,
               purgeWeight: lastSettings.purgeWeight || '',
-              startDate: new Date().toISOString().slice(0, 13) + ':00',
+              startDate: getLocalDatetimeString(),
           };
       }
       return {
@@ -91,7 +147,7 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
         yieldOut: log.yieldOut.toString(),
         timeSeconds: log.timeSeconds.toString(),
         temperature: log.temperature.toString(),
-        startDate: isColdBrew(log.method) ? new Date(log.date).toISOString().slice(0, 13) + ':00' : undefined
+        startDate: isColdBrew(log.method) ? getLocalDatetimeString(log.date) : undefined
     });
     setIsFormOpen(false); 
     setEditingLogId(log.id);
@@ -395,7 +451,7 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
                                     {log.purgeWeight && log.purgeWeight > 0 && <span className="flex items-center gap-1 text-slate-400"><RotateCw size={12}/> 洗磨 {log.purgeWeight}g</span>}
                                     
                                     {isOngoingColdBrew ? (
-                                        <span className="flex items-center gap-1 text-blue-600 font-medium italic"><Timer size={12}/> 萃取中...</span>
+                                        <ColdBrewTimer startDate={log.date} />
                                     ) : (
                                         log.timeSeconds > 0 && <span className="flex items-center gap-1"><Clock size={12}/> {formatDuration(log.timeSeconds, log.method)}</span>
                                     )}

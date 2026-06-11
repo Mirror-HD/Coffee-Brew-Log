@@ -1,8 +1,39 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Bean, BrewLog, BrewMethod, BeanOwner } from '../types';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { Coffee, Clock, Calendar } from 'lucide-react';
 import { CoffeeBeanIcon } from './CustomIcons';
+
+const ColdBrewDashboardTimer: React.FC<{ startDate: number }> = ({ startDate }) => {
+  const [elapsed, setElapsed] = useState(0);
+
+  useEffect(() => {
+    const calcElapsed = () => Math.floor((Date.now() - startDate) / 1000);
+    setElapsed(calcElapsed());
+
+    const interval = setInterval(() => {
+      setElapsed(calcElapsed());
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [startDate]);
+
+  if (elapsed < 0) return <span>等待开始</span>;
+
+  const days = Math.floor(elapsed / 86400);
+  const hours = Math.floor((elapsed % 86400) / 3600);
+  const minutes = Math.floor((elapsed % 3600) / 60);
+  const secs = elapsed % 60;
+
+  if (days > 0) {
+    return <span className="text-blue-600 font-mono font-medium">{days}天{hours}时{minutes}分</span>;
+  }
+  if (hours > 0) {
+    return <span className="text-blue-600 font-mono font-medium">{hours}时{minutes}分{secs}秒</span>;
+  }
+  return <span className="text-blue-600 font-mono font-medium">{minutes}分{secs}秒</span>;
+};
+
 
 interface DashboardProps {
   logs: BrewLog[];
@@ -105,7 +136,13 @@ const Dashboard: React.FC<DashboardProps> = ({ logs, beans }) => {
                     </div>
                     <div className="bg-slate-50 p-2 rounded-lg text-center border border-slate-100">
                         <div className="text-[10px] text-slate-400 mb-1">时间</div>
-                        <div className="font-bold text-slate-700 text-sm">{formatTime(lastLog.timeSeconds, lastLog.method)}</div>
+                        <div className="font-bold text-slate-700 text-sm">
+                            {lastLog.method === BrewMethod.COLD_BREW && lastLog.timeSeconds === 0 ? (
+                                <ColdBrewDashboardTimer startDate={lastLog.date} />
+                            ) : (
+                                formatTime(lastLog.timeSeconds, lastLog.method)
+                            )}
+                        </div>
                     </div>
                     <div className="bg-slate-50 p-2 rounded-lg text-center border border-slate-100">
                         <div className="text-[10px] text-slate-400 mb-1">水温</div>
