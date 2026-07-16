@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Bean, BrewLog, BrewMethod, Equipment, EquipmentType } from '../types';
+import { BREW_METHODS } from '../constants';
+import { Droplet, Clock, Thermometer, Plus, ChevronDown, X, Pencil, Trash2, AlertTriangle, RotateCw, Timer, CheckCircle, Save, Play } from 'lucide-react';
+import CustomSelect from './CustomSelect';
 
 const ColdBrewTimer: React.FC<{ startDate: number }> = ({ startDate }) => {
   const [elapsed, setElapsed] = useState(0);
@@ -18,41 +21,30 @@ const ColdBrewTimer: React.FC<{ startDate: number }> = ({ startDate }) => {
   if (elapsed < 0) {
     const absSeconds = Math.abs(elapsed);
     const hours = Math.floor(absSeconds / 3600);
-    const minutes = Math.floor((absSeconds % 3600) / 60);
-    const secs = absSeconds % 60;
     return (
-      <span className="flex items-center gap-1.5 text-slate-500 font-mono">
+      <span className="flex items-center gap-1 text-slate-500">
         <Timer size={12} className="text-slate-400 animate-pulse" />
-        <span>预计起始 (剩 {hours > 0 ? `${hours}小时` : ''}{minutes}分{secs}秒)</span>
+        <span>预计起始 (剩 {hours}小时)</span>
       </span>
     );
   }
 
   const days = Math.floor(elapsed / 86400);
   const hours = Math.floor((elapsed % 86400) / 3600);
-  const minutes = Math.floor((elapsed % 3600) / 60);
-  const secs = elapsed % 60;
 
   let timeStr = '已冷萃: ';
   if (days > 0) {
     timeStr += `${days}天`;
   }
-  if (days > 0 || hours > 0) {
-    timeStr += `${hours}小时`;
-  }
-  timeStr += `${minutes}分${secs}秒`;
+  timeStr += `${hours}小时`;
 
   return (
-    <span className="flex items-center gap-1.5 text-blue-600 font-mono font-medium animate-pulse">
+    <span className="flex items-center gap-1 text-blue-600 font-medium animate-pulse">
       <Timer size={12} className="animate-spin text-blue-500" style={{ animationDuration: '4s' }} />
       <span>{timeStr}</span>
     </span>
   );
 };
-
-import { BREW_METHODS } from '../constants';
-import { Droplet, Clock, Thermometer, Plus, ChevronDown, X, Pencil, Trash2, AlertTriangle, RotateCw, Timer, CheckCircle, Save, Play } from 'lucide-react';
-import CustomSelect from './CustomSelect';
 
 interface BrewLoggerProps {
   logs: BrewLog[];

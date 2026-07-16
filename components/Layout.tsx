@@ -24,10 +24,10 @@ const Layout: React.FC<LayoutProps> = ({ activeTab, setActiveTab, children }) =>
     <div className="h-screen bg-slate-50 text-slate-900 flex flex-col md:flex-row overflow-hidden">
       
       {/* Mobile Top Header - Logo triggers Settings */}
-      <header className="md:hidden fixed top-0 left-0 right-0 bg-amber-600 text-white shadow-md z-[100] flex items-center px-6 pt-12 pb-4 transition-all">
+      <header className="md:hidden fixed top-0 left-0 right-0 h-14 bg-amber-600 text-white shadow-md z-[100] flex items-center px-4 transition-all">
         <button 
           onClick={() => setActiveTab('settings')}
-          className={`flex items-center gap-2 font-bold text-xl active:scale-95 transition-all outline-none rounded-lg px-2 -ml-2 py-1 ${isSettingsActive ? 'bg-amber-700/50 ring-1 ring-white/30' : ''}`}
+          className={`flex items-center gap-2 font-bold text-xl active:scale-95 transition-all outline-none rounded-lg px-2 py-0.5 ${isSettingsActive ? 'bg-amber-700/50 ring-1 ring-white/30' : ''}`}
         >
            <Coffee className="stroke-2 w-6 h-6" />
            <span>Coffee</span>
@@ -36,16 +36,16 @@ const Layout: React.FC<LayoutProps> = ({ activeTab, setActiveTab, children }) =>
 
       {/* Sidebar (Desktop) */}
       <nav className="hidden md:flex bg-white border-r border-slate-200 w-64 flex-col flex-shrink-0 z-[100] shadow-none">
-        <div className="p-6">
+        <div className="p-5 border-b border-slate-100">
           <button 
             onClick={() => setActiveTab('settings')}
-            className={`flex items-center gap-2 font-bold text-xl tracking-tight transition-all outline-none rounded-xl p-3 -m-3 group w-full
+            className={`flex items-center gap-2 font-bold text-xl tracking-tight transition-all outline-none rounded-xl p-2.5 group w-full
               ${isSettingsActive 
                 ? 'bg-amber-50 text-amber-700' 
                 : 'text-amber-700 hover:bg-slate-50'}
             `}
           >
-            <Coffee className={`stroke-2 transition-transform duration-300 ${isSettingsActive ? 'scale-110' : 'group-hover:rotate-12'}`} />
+            <Coffee className={`stroke-2 transition-transform duration-300 ${isSettingsActive ? 'scale-110' : 'group-hover:rotate-12'} w-6 h-6`} />
             <span>Coffee</span>
           </button>
         </div>
@@ -75,8 +75,8 @@ const Layout: React.FC<LayoutProps> = ({ activeTab, setActiveTab, children }) =>
       </nav>
 
       {/* Main Content Area */}
-      <main className="flex-1 overflow-y-auto overflow-x-hidden md:p-8 pt-28 pb-20 md:pb-8 px-4 w-full scroll-smooth">
-        <div className="max-w-5xl mx-auto animate-in fade-in duration-300">
+      <main className="flex-1 overflow-y-auto md:overflow-hidden overflow-x-hidden md:p-5 pt-[68px] pb-[calc(4rem+12px+env(safe-area-inset-bottom,0px))] md:pb-5 px-3 w-full scroll-smooth flex flex-col h-full">
+        <div className="max-w-7xl w-full mx-auto md:px-2 animate-in fade-in duration-300 flex-1 flex flex-col min-h-0 h-auto md:h-full">
            {children}
         </div>
       </main>

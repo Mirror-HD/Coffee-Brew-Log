@@ -1,0 +1,8 @@
+{
+	"appId": "com.wdj3383.coffee",
+	"appName": "Coffee",
+	"webDir": "dist",
+	"server": {
+		"androidScheme": "https"
+	}
+}

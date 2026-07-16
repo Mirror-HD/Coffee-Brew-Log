@@ -109,7 +109,7 @@ const App: React.FC = () => {
   return (
     <Layout activeTab={activeTab} setActiveTab={setActiveTab}>
       {activeTab === 'dashboard' && (
-        <Dashboard logs={logs} beans={beans} />
+        <Dashboard logs={logs} beans={beans} onUpdateLog={handleUpdateLog} />
       )}
       
       {activeTab === 'beans' && (
