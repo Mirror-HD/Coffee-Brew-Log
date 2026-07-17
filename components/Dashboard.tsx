@@ -77,7 +77,7 @@ const Dashboard: React.FC<DashboardProps> = ({ logs, beans, onUpdateLog }) => {
   const activeColdBrews = logs.filter(l => l.method === BrewMethod.COLD_BREW && l.timeSeconds === 0);
 
   return (
-    <div className="flex flex-col gap-3 md:gap-4 h-auto md:h-full pb-2 pt-1 sm:pt-0">
+    <div className="flex flex-col gap-3 md:gap-4 h-auto md:h-full pb-6 md:pb-2 pt-1 sm:pt-0">
       <style>{`
         .recharts-wrapper { outline: none !important; }
         .recharts-surface:focus { outline: none !important; }

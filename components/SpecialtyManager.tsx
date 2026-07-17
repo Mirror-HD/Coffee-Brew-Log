@@ -238,7 +238,7 @@ const SpecialtyManager: React.FC<SpecialtyManagerProps> = ({ beans, recipes, onA
   );
 
   return (
-    <div className="space-y-4 md:space-y-6">
+    <div className="space-y-4 md:space-y-6 pb-6 md:pb-4">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <h2 className="text-xl md:text-2xl font-bold text-slate-800">特调配方</h2>
         <button

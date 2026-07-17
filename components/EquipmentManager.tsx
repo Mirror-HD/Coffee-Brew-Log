@@ -58,7 +58,7 @@ const EquipmentManager: React.FC<EquipmentManagerProps> = ({ equipment, onAddEqu
   })).filter(group => group.items.length > 0 || group.type === EquipmentType.GRINDER);
 
   return (
-    <div className="space-y-4 md:space-y-6">
+    <div className="space-y-4 md:space-y-6 pb-6 md:pb-4">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <h2 className="text-xl md:text-2xl font-bold text-slate-800">我的设备</h2>
         <button

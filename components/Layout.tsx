@@ -75,7 +75,7 @@ const Layout: React.FC<LayoutProps> = ({ activeTab, setActiveTab, children }) =>
       </nav>
 
       {/* Main Content Area */}
-      <main className="flex-1 overflow-y-auto md:overflow-hidden overflow-x-hidden md:p-5 py-4 px-3 w-full scroll-smooth flex flex-col min-h-0">
+      <main className="flex-1 overflow-y-auto md:overflow-hidden overflow-x-hidden pt-4 pb-6 px-3 md:p-5 w-full scroll-smooth flex flex-col min-h-0">
         <div className="max-w-7xl w-full mx-auto md:px-2 animate-in fade-in duration-300 flex-1 flex flex-col min-h-0 h-auto md:h-full">
            {children}
         </div>

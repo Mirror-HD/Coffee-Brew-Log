@@ -222,7 +222,7 @@ const Settings: React.FC<SettingsProps> = ({ beans, logs, equipment, specialtyRe
   };
 
   return (
-    <div className="space-y-4 md:space-y-6">
+    <div className="space-y-4 md:space-y-6 pb-6 md:pb-4">
        <div className="flex justify-between items-center">
          <h2 className="text-xl md:text-2xl font-bold text-slate-800">数据归档</h2>
        </div>

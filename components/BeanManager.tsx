@@ -557,7 +557,7 @@ const BeanManager: React.FC<BeanManagerProps> = ({ beans, onAddBean, onUpdateBea
   };
 
   return (
-    <div className="space-y-4 md:space-y-6">
+    <div className="space-y-4 md:space-y-6 pb-6 md:pb-4">
       
       {/* Custom Delete Modal */}
       {beanToDelete && (
