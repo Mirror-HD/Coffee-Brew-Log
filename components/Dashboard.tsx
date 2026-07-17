@@ -201,15 +201,15 @@ const Dashboard: React.FC<DashboardProps> = ({ logs, beans, onUpdateLog }) => {
           <h3 className="text-xs sm:text-sm font-bold text-slate-500 mb-2 uppercase tracking-wider">分布</h3>
           {methodData.length > 0 ? (
             <div className="flex-1 flex flex-col justify-between min-h-0">
-                <div className="flex-1 min-h-[100px] sm:min-h-[120px] relative">
+                <div className="flex-1 min-h-[135px] sm:min-h-[150px] relative">
                     <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                         <Pie
                         data={methodData}
                         cx="50%"
-                        cy="45%"
-                        innerRadius={32}
-                        outerRadius={46}
+                        cy="52%"
+                        innerRadius={38}
+                        outerRadius={55}
                         paddingAngle={4}
                         dataKey="value"
                         stroke="none"
