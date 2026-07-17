@@ -24,7 +24,7 @@ const Layout: React.FC<LayoutProps> = ({ activeTab, setActiveTab, children }) =>
     <div className="h-screen bg-slate-50 text-slate-900 flex flex-col md:flex-row overflow-hidden">
       
       {/* Mobile Top Header - Logo triggers Settings */}
-      <header className="md:hidden fixed top-0 left-0 right-0 h-14 bg-amber-600 text-white shadow-md z-[100] flex items-center px-4 transition-all">
+      <header className="md:hidden fixed top-0 left-0 right-0 pt-12 pb-4 bg-amber-600 text-white shadow-md z-[100] flex items-center px-4 transition-all">
         <button 
           onClick={() => setActiveTab('settings')}
           className={`flex items-center gap-2 font-bold text-xl active:scale-95 transition-all outline-none rounded-lg px-2 py-0.5 ${isSettingsActive ? 'bg-amber-700/50 ring-1 ring-white/30' : ''}`}
@@ -75,7 +75,7 @@ const Layout: React.FC<LayoutProps> = ({ activeTab, setActiveTab, children }) =>
       </nav>
 
       {/* Main Content Area */}
-      <main className="flex-1 overflow-y-auto md:overflow-hidden overflow-x-hidden md:p-5 pt-[68px] pb-[calc(4rem+12px+env(safe-area-inset-bottom,0px))] md:pb-5 px-3 w-full scroll-smooth flex flex-col h-full">
+      <main className="flex-1 overflow-y-auto md:overflow-hidden overflow-x-hidden md:p-5 pt-24 pb-[calc(4rem+12px+env(safe-area-inset-bottom,0px))] md:pb-5 px-3 w-full scroll-smooth flex flex-col h-full">
         <div className="max-w-7xl w-full mx-auto md:px-2 animate-in fade-in duration-300 flex-1 flex flex-col min-h-0 h-auto md:h-full">
            {children}
         </div>

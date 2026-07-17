@@ -96,10 +96,11 @@ const App: React.FC = () => {
     saveSpecialtyRecipes(updated);
   };
 
-  const handleDataImport = (newBeans: Bean[], newLogs: BrewLog[], newEquipment: Equipment[]) => {
+  const handleDataImport = (newBeans: Bean[], newLogs: BrewLog[], newEquipment: Equipment[], newSpecialty: SpecialtyRecipe[]) => {
       setBeans(newBeans);
       setLogs(newLogs);
       setEquipment(newEquipment);
+      setSpecialtyRecipes(newSpecialty);
   };
 
   if (isLoading) {
@@ -156,6 +157,7 @@ const App: React.FC = () => {
             beans={beans}
             logs={logs}
             equipment={equipment}
+            specialtyRecipes={specialtyRecipes}
             onImportSuccess={handleDataImport}
         />
       )}

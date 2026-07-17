@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { Download, Upload, AlertCircle, CheckCircle2, Loader2, Share2, ExternalLink, Save } from 'lucide-react';
-import { Bean, BrewLog, Equipment } from '../types';
-import { saveBeans, saveEquipment, saveLogs } from '../services/storageService';
+import { Bean, BrewLog, Equipment, SpecialtyRecipe } from '../types';
+import { saveBeans, saveEquipment, saveLogs, saveSpecialtyRecipes } from '../services/storageService';
 import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
 import { Capacitor } from '@capacitor/core';
@@ -10,10 +10,11 @@ interface SettingsProps {
   beans: Bean[];
   logs: BrewLog[];
   equipment: Equipment[];
-  onImportSuccess: (beans: Bean[], logs: BrewLog[], equipment: Equipment[]) => void;
+  specialtyRecipes: SpecialtyRecipe[];
+  onImportSuccess: (beans: Bean[], logs: BrewLog[], equipment: Equipment[], specialtyRecipes: SpecialtyRecipe[]) => void;
 }
 
-const Settings: React.FC<SettingsProps> = ({ beans, logs, equipment, onImportSuccess }) => {
+const Settings: React.FC<SettingsProps> = ({ beans, logs, equipment, specialtyRecipes, onImportSuccess }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [importStatus, setImportStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [statusMessage, setStatusMessage] = useState('');
@@ -48,7 +49,8 @@ const Settings: React.FC<SettingsProps> = ({ beans, logs, equipment, onImportSuc
         timestamp: Date.now(),
         beans,
         logs,
-        equipment
+        equipment,
+        specialtyRecipes
     };
     return JSON.stringify(data, null, 2);
   };
@@ -196,9 +198,11 @@ const Settings: React.FC<SettingsProps> = ({ beans, logs, equipment, onImportSuc
         saveLogs(json.logs);
         const importedEquipment = json.equipment && Array.isArray(json.equipment) ? json.equipment : [];
         saveEquipment(importedEquipment);
-        onImportSuccess(json.beans, json.logs, importedEquipment);
+        const importedSpecialty = json.specialtyRecipes && Array.isArray(json.specialtyRecipes) ? json.specialtyRecipes : [];
+        saveSpecialtyRecipes(importedSpecialty);
+        onImportSuccess(json.beans, json.logs, importedEquipment, importedSpecialty);
         setImportStatus('success');
-        setStatusMessage(`成功恢复: ${json.beans.length} 款豆子, ${json.logs.length} 条记录`);
+        setStatusMessage(`成功恢复: ${json.beans.length} 款豆子, ${json.logs.length} 条记录, ${importedSpecialty.length} 款特调`);
       } catch (err) {
         console.error(err);
         setImportStatus('error');
