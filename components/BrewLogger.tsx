@@ -62,10 +62,11 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
   const [expandedLogId, setExpandedLogId] = useState<string | null>(null);
   const [logToDelete, setLogToDelete] = useState<string | null>(null);
 
-  const getLocalDatetimeString = (dateInput: Date | number = new Date()) => {
+  const getLocalDatetimeString = (dateInput: Date | number = new Date(), toHour = false) => {
     const d = typeof dateInput === 'number' ? new Date(dateInput) : dateInput;
     const tzoffset = d.getTimezoneOffset() * 60000;
-    return new Date(d.getTime() - tzoffset).toISOString().slice(0, 13) + ':00';
+    const localISO = new Date(d.getTime() - tzoffset).toISOString();
+    return toHour ? localISO.slice(0, 13) + ':00' : localISO.slice(0, 16);
   };
 
   const isColdBrew = (method?: string) => method === BrewMethod.COLD_BREW;
@@ -104,6 +105,7 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
               doseIn: '18', yieldOut: '', timeSeconds: '', temperature: '',
               grinderId: lastSettings.grinderId, brewerId: '', grinderSetting: lastSettings.grinderSetting,
               purgeWeight: lastSettings.purgeWeight || '',
+              startDate: getLocalDatetimeString(),
           };
       } 
       if (method === BrewMethod.COLD_BREW) {
@@ -111,13 +113,14 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
               doseIn: '30', yieldOut: '300', timeSeconds: '0', temperature: '0', 
               grinderId: lastSettings.grinderId, brewerId: '', grinderSetting: lastSettings.grinderSetting,
               purgeWeight: lastSettings.purgeWeight || '',
-              startDate: getLocalDatetimeString(),
+              startDate: getLocalDatetimeString(undefined, true),
           };
       }
       return {
           doseIn: '15', yieldOut: '225', timeSeconds: '', temperature: '',
           grinderId: lastSettings.grinderId, brewerId: lastSettings.brewerId, grinderSetting: lastSettings.grinderSetting,
           purgeWeight: lastSettings.purgeWeight || '',
+          startDate: getLocalDatetimeString(),
       };
   };
 
@@ -139,7 +142,7 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
         yieldOut: log.yieldOut.toString(),
         timeSeconds: log.timeSeconds.toString(),
         temperature: log.temperature.toString(),
-        startDate: isColdBrew(log.method) ? getLocalDatetimeString(log.date) : undefined
+        startDate: getLocalDatetimeString(log.date, isColdBrew(log.method))
     });
     setIsFormOpen(false); 
     setEditingLogId(log.id);
@@ -159,7 +162,7 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
     const timeVal = parseFloat(formData.timeSeconds) || 0;
     const tempVal = parseFloat(formData.temperature) || 0; 
     
-    const logDate = (isColdBrew(formData.method) && formData.startDate) 
+    const logDate = formData.startDate 
         ? new Date(formData.startDate).getTime() 
         : (formData.date || Date.now());
 
@@ -268,23 +271,34 @@ const BrewLogger: React.FC<BrewLoggerProps> = ({ logs, beans, equipment, onAddLo
                     />
                 </div>
             ) : (
-                <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-3">
                      <div>
-                        <label className="block text-xs font-medium text-slate-500 mb-1">时间 (秒)</label>
+                        <label className="block text-xs font-medium text-slate-500 mb-1">日期</label>
                         <input
-                            type="number" value={formData.timeSeconds}
-                            onChange={e => setFormData({ ...formData, timeSeconds: e.target.value })}
-                            className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none"
+                            type="datetime-local"
+                            value={formData.startDate}
+                            onChange={e => setFormData({ ...formData, startDate: e.target.value })}
+                            className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none text-sm"
                         />
                      </div>
-                     <div>
-                        <label className="block text-xs font-medium text-slate-500 mb-1">水温 (°C)</label>
-                        <input
-                            type="number" step="0.5" value={formData.temperature}
-                            onChange={e => setFormData({ ...formData, temperature: e.target.value })}
-                            className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none"
-                            placeholder={isEspresso(formData.method) ? '可不填' : ''}
-                        />
+                     <div className="grid grid-cols-2 gap-3">
+                         <div>
+                            <label className="block text-xs font-medium text-slate-500 mb-1">时间 (秒)</label>
+                            <input
+                                type="number" value={formData.timeSeconds}
+                                onChange={e => setFormData({ ...formData, timeSeconds: e.target.value })}
+                                className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none"
+                            />
+                         </div>
+                         <div>
+                            <label className="block text-xs font-medium text-slate-500 mb-1">水温 (°C)</label>
+                            <input
+                                type="number" step="0.5" value={formData.temperature}
+                                onChange={e => setFormData({ ...formData, temperature: e.target.value })}
+                                className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-500 outline-none"
+                                placeholder={isEspresso(formData.method) ? '可不填' : ''}
+                            />
+                         </div>
                      </div>
                 </div>
             )}
