@@ -1,28 +1,21 @@
-const CACHE_NAME = 'coffee-app-v1';
-const ASSETS_TO_CACHE = [
+const CACHE_NAME = 'coffee-app-v2';
+const APP_SHELL = [
   './',
   './index.html',
-  'https://cdn.tailwindcss.com',
-  'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap',
-  'https://aistudiocdn.com/react@^19.2.1/',
-  'https://aistudiocdn.com/react@^19.2.1',
-  'https://aistudiocdn.com/recharts@^3.5.1',
-  'https://aistudiocdn.com/@google/genai@^1.31.0',
-  'https://aistudiocdn.com/lucide-react@^0.556.0',
-  'https://aistudiocdn.com/react-dom@^19.2.1/'
+  './manifest.json',
 ];
 
-// Install event: Cache files
+// Install event: pre-cache the app shell
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE);
+      return cache.addAll(APP_SHELL);
     })
   );
   self.skipWaiting();
 });
 
-// Activate event: Clean up old caches
+// Activate event: clean up old caches
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
@@ -38,25 +31,38 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Fetch event: Serve from cache, fall back to network
+// Fetch event
 self.addEventListener('fetch', (event) => {
-  // Navigation requests (HTML) - Network First, fall back to cache
-  if (event.request.mode === 'navigate') {
+  const request = event.request;
+
+  // Navigation requests (HTML): network first, fall back to cached shell (offline support)
+  if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(event.request)
-        .catch(() => {
-          return caches.match('./index.html');
-        })
+      fetch(request).catch(() => {
+        return caches.match('./index.html').then((response) => {
+          if (response) return response;
+          return new Response('<html><body><h1>无法连接网络</h1></body></html>', { status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+        });
+      })
     );
     return;
   }
 
-  // Asset requests - Cache First, fall back to network
+  // Only handle same-origin GET requests (Vite build assets are content-hashed, safe to cache)
+  if (request.method !== 'GET' || new URL(request.url).origin !== self.location.origin) {
+    return;
+  }
+
+  // Asset requests: cache first, then network (and cache successful responses for next time)
   event.respondWith(
-    caches.match(event.request).then((response) => {
-      return response || fetch(event.request).then((fetchResponse) => {
-          // Optionally cache new requests dynamically here
-          return fetchResponse;
+    caches.match(request).then((cached) => {
+      if (cached) return cached;
+      return fetch(request).then((response) => {
+        if (response && response.status === 200 && response.type === 'basic') {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+        }
+        return response;
       });
     })
   );
