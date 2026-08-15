@@ -107,4 +107,4 @@ export interface SpecialtyRecipe {
   date: number;
 }
 
-export type Tab = 'dashboard' | 'beans' | 'brews' | 'equipment' | 'settings' | 'specialty';
+export type Tab = 'dashboard' | 'beans' | 'brews' | 'equipment' | 'specialty';

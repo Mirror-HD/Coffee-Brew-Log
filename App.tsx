@@ -7,6 +7,7 @@ import EquipmentManager from './components/EquipmentManager';
 import Settings from './components/Settings';
 import SpecialtyManager from './components/SpecialtyManager';
 import { Bean, BrewLog, Equipment, Tab, SpecialtyRecipe } from './types';
+import { X } from 'lucide-react';
 import { getBeans, saveBeans, getLogs, saveLogs, getEquipment, saveEquipment, getSpecialtyRecipes, saveSpecialtyRecipes } from './services/storageService';
 
 const App: React.FC = () => {
@@ -16,6 +17,7 @@ const App: React.FC = () => {
   const [equipment, setEquipment] = useState<Equipment[]>([]);
   const [specialtyRecipes, setSpecialtyRecipes] = useState<SpecialtyRecipe[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isArchiveOpen, setIsArchiveOpen] = useState(false);
 
   // Load Data
   useEffect(() => {
@@ -108,7 +110,8 @@ const App: React.FC = () => {
   }
 
   return (
-    <Layout activeTab={activeTab} setActiveTab={setActiveTab}>
+    <>
+    <Layout activeTab={activeTab} setActiveTab={setActiveTab} onOpenArchive={() => setIsArchiveOpen(true)}>
       {activeTab === 'dashboard' && (
         <Dashboard logs={logs} beans={beans} onUpdateLog={handleUpdateLog} />
       )}
@@ -151,17 +154,35 @@ const App: React.FC = () => {
             onDeleteEquipment={handleDeleteEquipment}
         />
       )}
-
-      {activeTab === 'settings' && (
-        <Settings 
-            beans={beans}
-            logs={logs}
-            equipment={equipment}
-            specialtyRecipes={specialtyRecipes}
-            onImportSuccess={handleDataImport}
-        />
-      )}
     </Layout>
+    {isArchiveOpen && (
+      <div className="fixed inset-0 z-[300] bg-slate-50 flex flex-col" role="dialog" aria-modal="true">
+        <header className="bg-amber-600 text-white shadow-md z-10 flex items-center justify-between px-4 pt-12 pb-4 md:pt-4 shrink-0">
+          <div className="flex items-center gap-2 font-bold text-xl px-2 py-0.5">
+            <span>数据归档</span>
+          </div>
+          <button
+            onClick={() => setIsArchiveOpen(false)}
+            className="p-2 rounded-lg hover:bg-amber-700/50 active:scale-95 transition-all text-white/80 hover:text-white"
+            aria-label="关闭"
+          >
+            <X size={22} />
+          </button>
+        </header>
+        <div className="flex-1 overflow-y-auto px-3 md:p-5">
+          <div className="max-w-5xl w-full mx-auto md:px-2 pt-4 pb-6">
+            <Settings 
+              beans={beans}
+              logs={logs}
+              equipment={equipment}
+              specialtyRecipes={specialtyRecipes}
+              onImportSuccess={handleDataImport}
+            />
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 };
 
