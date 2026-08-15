@@ -18,11 +18,11 @@
 
 | 概览仪表盘 | 冲煮记录 |
 |:---:|:---:|
-| ![概览](docs/screenshots/dashboard.png) | ![记录](docs/screenshots/brews.png) |
+| ![概览](docs/screenshots/dashboard.jpg) | ![记录](docs/screenshots/brews.jpg) |
 
-| 豆仓管理 | 侧边抽屉菜单 |
+| 豆仓管理 | 特调配方 |
 |:---:|:---:|
-| ![豆仓](docs/screenshots/beans.png) | ![抽屉](docs/screenshots/drawer.png) |
+| ![豆仓](docs/screenshots/beans.jpg) | ![特调](docs/screenshots/specialty.jpg) |
 
 ## 🛠️ 技术栈
 
